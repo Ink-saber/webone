@@ -1,0 +1,87 @@
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Microsoft YaHei", sans-serif;
+  background: #f6f7f9;
+  color: #222;
+  line-height: 1.6;
+}
+
+/* 顶部、导航、正文、页脚统一宽度，居中 */
+header, nav, main, footer {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+header { padding-top: 24px; }
+h1 { font-size: 24px; margin: 0 0 4px; }
+.subtitle { margin: 0; color: #666; font-size: 14px; }
+
+/* 导航：横着排，当前页加粗 */
+nav {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  border-bottom: 1px solid #ddd;
+}
+nav a { padding: 8px 10px; color: #555; text-decoration: none; }
+nav a.active { color: #000; font-weight: bold; border-bottom: 2px solid #000; }
+
+main { padding-top: 16px; padding-bottom: 40px; }
+section {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+#search {
+  width: 100%;
+  padding: 8px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+#count { font-size: 13px; color: #666; margin: 0 0 12px; }
+
+/* 列表：一条一行 */
+ul { list-style: none; margin: 0; padding: 0; }
+li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+li:last-child { border-bottom: none; }
+
+/* 状态标签：红色=待办，绿色=已完成 */
+.badge {
+  font-size: 12px;
+  padding: 1px 8px;
+  border-radius: 10px;
+  background: #ffe0e0;
+  color: #b00;
+}
+.badge.done { background: #dcf5dc; color: #1a7f37; }
+
+.item-title {
+  flex: 1;
+  color: #222;
+  text-decoration: none;
+  word-break: break-word;   /* 长标题自动换行，不撑出横向滚动条 */
+}
+.item-title.done-text { text-decoration: line-through; color: #999; }
+
+.empty { text-align: center; color: #666; padding: 20px 0; }
+
+h2 { font-size: 20px; margin: 0 0 8px; word-break: break-word; }
+.meta { font-size: 13px; color: #666; }
+
+/* 手机适配：窄屏时缩小标题和内边距 */
+@media (max-width: 480px) {
+  h1 { font-size: 20px; }
+  section { padding: 12px; }
+}

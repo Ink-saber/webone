@@ -2,9 +2,35 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <title>上线测试</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>第四阶段待办清单</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-<body>
-  <h1>页面已上线，正在填内容</h1>
+<body data-page="list">
+
+  <header>
+    <h1>第四阶段待办清单</h1>
+    <p class="subtitle">26 级 · 李昊泽 · 一周做出 Web + AI 应用</p>
+  </header>
+
+  <nav>
+    <a href="index.html" class="active">列表</a>
+    <a href="detail.html?id=1">详情</a>
+  </nav>
+
+  <main>
+    <section>
+      <input id="search" type="search" placeholder="输入关键字筛选，比如：接口">
+      <p id="count"></p>
+      <ul id="list"></ul>
+      <p id="empty" hidden>没有匹配的待办</p>
+    </section>
+  </main>
+
+  <footer>
+    <p>© 2026 李昊泽</p>
+  </footer>
+
+  <script src="app.js"></script>
 </body>
 </html>
