@@ -1,4 +1,20 @@
-// ===== 你的 7 条数据 =====
+/* ============================================================
+   这个文件是网页的「动作」部分，只做两件事：
+     1. 列表页：把 7 条数据画成一列，并支持搜索筛选
+     2. 详情页：从网址里取出 ?id=N，找到那一条，画出详情
+   页面一打开会判断自己是谁（看 <body data-page="...">），
+   然后只运行对应的那一个函数。
+   ============================================================ */
+
+
+/* ---------- 一、数据 ---------- */
+
+// 暂时直接写在代码里（任务 3 会改成从服务器读取）
+// 每条数据有 4 个项目：
+//   id   编号，唯一，详情页靠它找到这一条
+//   title 标题，显示在列表里
+//   done 是否完成，true=已完成，false=待办
+//   note 说明，只有详情页显示
 const items = [
   { id: 1, title: "任务1：静态页面上线", done: true,
     note: "已经拿到 https 网址，抓包和 404 截图都做了。" },
@@ -16,69 +32,128 @@ const items = [
     note: "提交记录就是本周的真实进度。" }
 ];
 
-// ===== 列表页：把数据画到页面上 =====
-function showList() {
-  const listEl = document.getElementById("list");
-  const countEl = document.getElementById("count");
-  const emptyEl = document.getElementById("empty");
-  const searchEl = document.getElementById("search");
 
+/* ---------- 二、列表页 ---------- */
+
+// 在列表页被调用一次
+function showList() {
+
+  // 先在页面上找到 4 个需要用到的地方
+  const listEl   = document.getElementById("list");    // 放列表的空盒子 <ul>
+  const countEl  = document.getElementById("count");   // 显示「共几条」
+  const emptyEl  = document.getElementById("empty");   // 「没有匹配」的提示
+  const searchEl = document.getElementById("search");  // 搜索框
+
+  // draw 的意思是「画一遍」。给它一个关键字，它按关键字重新画整个列表
   function draw(keyword) {
-    const kw = keyword.trim();
+
+    const kw = keyword.trim();   // 去掉首尾空格
+
+    // 从 7 条里挑出标题包含关键字的那些
+    // 关键字是空的时候，每一条都包含空字符串，所以 7 条全留下
     const shown = items.filter(function (it) {
       return it.title.includes(kw);
     });
 
-    listEl.innerHTML = "";                 // 先清空，不然会重复叠加
+    // 画之前先清空，否则每输入一个字就往下叠一遍
+    listEl.innerHTML = "";
 
+    // 把挑出来的每一条，画成一个 <li>
     shown.forEach(function (it) {
-      const li = document.createElement("li");
 
+      const li = document.createElement("li");   // 造一个「一行」的盒子
+
+      // 1) 状态标签：已完成绿色，待办红色
       const badge = document.createElement("span");
       badge.className = it.done ? "badge done" : "badge";
       badge.textContent = it.done ? "已完成" : "待办";
 
+      // 2) 可点的标题，点了跳到详情页，网址带上这条的编号
       const a = document.createElement("a");
       a.className = "item-title";
-      if (it.done) a.classList.add("done-text");
+      if (it.done) a.classList.add("done-text");   // 已完成的标题加删除线
       a.href = "detail.html?id=" + it.id;
       a.textContent = it.title;
 
+      // 3) 把标签和标题挂到这一行里，再把这一行挂到列表里
       li.appendChild(badge);
       li.appendChild(a);
       listEl.appendChild(li);
     });
 
+    // 更新上面那行「共 N 条，显示 M 条」
     countEl.textContent = "共 " + items.length + " 条，显示 " + shown.length + " 条";
+
+    // 一条都没剩下的时候，把「没有匹配」的提示显示出来
     emptyEl.hidden = shown.length !== 0;
   }
 
-  // 输入框每变一次就重画
+  // 这是任务书要求的「1 处 JS 交互」：
+  // 搜索框内容一变化（每敲一个字），就按当前内容重画一次
   searchEl.addEventListener("input", function (e) {
     draw(e.target.value);
   });
 
-  draw("");   // 打开页面先画一次完整的
+  // 打开页面时不会自动画，必须主动叫它画一次
+  draw("");
 }
 
-// ===== 详情页：从网址里取 id，找那一条 =====
-function showDetail() {
-  const box = document.getElementById("detail");
-  const id = Number(new URLSearchParams(location.search).get("id"));
-  const item = items.find(function (it) { return it.id === id; });
 
+/* ---------- 三、详情页 ---------- */
+
+// 在详情页被调用一次
+function showDetail() {
+
+  const box = document.getElementById("detail");   // 放内容的空盒子
+
+  // 从网址里取出 id。比如网址是 detail.html?id=3，
+  // location.search 是 "?id=3"，取出字符串 "3" 再用 Number 变成数字
+  const id = Number(new URLSearchParams(location.search).get("id"));
+
+  // 在 7 条数据里找编号等于 id 的那一条
+  const item = items.find(function (it) {
+    return it.id === id;
+  });
+
+  // 找不到（比如网址被改成了 ?id=999）
   if (!item) {
-    box.innerHTML = "<p class='empty'>找不到这条，id 可能是错的。</p>";
-    return;
+    const tip = document.createElement("p");
+    tip.className = "empty";
+    tip.textContent = "找不到这条，id 可能是错的。";
+    box.appendChild(tip);
+    return;   // 后面的不用做了
   }
 
-  box.innerHTML =
-    "<h2>" + item.title + "</h2>" +
-    "<p class='meta'>编号 #" + item.id + " · " + (item.done ? "已完成" : "待办") + "</p>" +
-    "<p>" + item.note + "</p>" +
-    "<p><a href='index.html'>← 返回列表</a></p>";
+  // 找得到：标题、编号和状态、说明、返回链接
+  const title = document.createElement("h2");
+  title.textContent = item.title;
+
+  const meta = document.createElement("p");
+  meta.className = "meta";
+  meta.textContent = "编号 #" + item.id + " · " + (item.done ? "已完成" : "待办");
+
+  const note = document.createElement("p");
+  note.textContent = item.note;
+
+  const back = document.createElement("p");
+  const backLink = document.createElement("a");
+  backLink.href = "index.html";
+  backLink.textContent = "← 返回列表";
+  back.appendChild(backLink);
+
+  box.appendChild(title);
+  box.appendChild(meta);
+  box.appendChild(note);
+  box.appendChild(back);
 }
 
-// ===== 页面一打开，判断该跑哪一段 =====
-if (document.body.dataset.page === "list") showList();
-if (document.body.dataset.page === "detail") showDetail();
+
+/* ---------- 四、入口 ---------- */
+
+// 两个页面共用这一个文件，靠 <body data-page="list|detail"> 区分该跑哪段
+if (document.body.dataset.page === "list") {
+  showList();
+}
+if (document.body.dataset.page === "detail") {
+  showDetail();
+}

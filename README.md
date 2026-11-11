@@ -1,84 +1,56 @@
-// ===== 你的 7 条数据 =====
-const items = [
-  { id: 1, title: "任务1：静态页面上线", done: true,
-    note: "已经拿到 https 网址，抓包和 404 截图都做了。" },
-  { id: 2, title: "任务2：写 3 个接口，数据落盘", done: false,
-    note: "查看列表 / 新增 / 删除三个通道，服务重启后数据还在。" },
-  { id: 3, title: "任务3：前后端联调，做出增删查闭环", done: false,
-    note: "加载中、空数据、请求失败三种状态都要有。" },
-  { id: 4, title: "任务4：接入大模型，做流式对话页", done: false,
-    note: "文字一个一个蹦出来，密钥只放在服务器上。" },
-  { id: 5, title: "任务5：工具调用，让模型操作数据", done: false,
-    note: "一句自然语言，数据库真的多一条。" },
-  { id: 6, title: "任务6：整合交付与答辩", done: false,
-    note: "README 能让别人 10 分钟跑起来。" },
-  { id: 7, title: "贯穿全程：每天一次提交 + 周记", done: false,
-    note: "提交记录就是本周的真实进度。" }
-];
+# 第四阶段待办清单
 
-// ===== 列表页：把数据画到页面上 =====
-function showList() {
-  const listEl = document.getElementById("list");
-  const countEl = document.getElementById("count");
-  const emptyEl = document.getElementById("empty");
-  const searchEl = document.getElementById("search");
+26 级 · 李昊泽 · 用纯 HTML / CSS / JavaScript 写的一个待办清单页面。
 
-  function draw(keyword) {
-    const kw = keyword.trim();
-    const shown = items.filter(function (it) {
-      return it.title.includes(kw);
-    });
+## 这是什么
 
-    listEl.innerHTML = "";                 // 先清空，不然会重复叠加
+用来记录我这一周第四阶段任务的网页，一共两个页面：
 
-    shown.forEach(function (it) {
-      const li = document.createElement("li");
+- **列表页** `index.html`：展示 7 条任务，可以按关键字实时筛选
+- **详情页** `detail.html`：点任意一条进去，看这条任务的说明
 
-      const badge = document.createElement("span");
-      badge.className = it.done ? "badge done" : "badge";
-      badge.textContent = it.done ? "已完成" : "待办";
+> 7 条数据目前直接写在 `app.js` 顶部。下一步（任务 2、3）会改成存在服务器上、页面上能加能删。
 
-      const a = document.createElement("a");
-      a.className = "item-title";
-      if (it.done) a.classList.add("done-text");
-      a.href = "detail.html?id=" + it.id;
-      a.textContent = it.title;
+## 功能
 
-      li.appendChild(badge);
-      li.appendChild(a);
-      listEl.appendChild(li);
-    });
+- 7 条任务，用「已完成 / 待办」两种标签区分
+- 搜索框输入关键字，列表实时筛选；没有结果时显示提示文字
+- 点任务标题跳到详情页，详情页可以返回列表
+- 手机屏幕（375px 宽）下正常显示，不出现横向滚动条
 
-    countEl.textContent = "共 " + items.length + " 条，显示 " + shown.length + " 条";
-    emptyEl.hidden = shown.length !== 0;
-  }
+## 本地打开方式
 
-  // 输入框每变一次就重画
-  searchEl.addEventListener("input", function (e) {
-    draw(e.target.value);
-  });
+方法一：直接双击 `index.html`，用浏览器打开。
 
-  draw("");   // 打开页面先画一次完整的
-}
+方法二：在本目录打开命令行，执行
 
-// ===== 详情页：从网址里取 id，找那一条 =====
-function showDetail() {
-  const box = document.getElementById("detail");
-  const id = Number(new URLSearchParams(location.search).get("id"));
-  const item = items.find(function (it) { return it.id === id; });
+```bash
+npx serve .
+```
 
-  if (!item) {
-    box.innerHTML = "<p class='empty'>找不到这条，id 可能是错的。</p>";
-    return;
-  }
+然后访问终端里提示的地址（通常是 http://localhost:3000）。
 
-  box.innerHTML =
-    "<h2>" + item.title + "</h2>" +
-    "<p class='meta'>编号 #" + item.id + " · " + (item.done ? "已完成" : "待办") + "</p>" +
-    "<p>" + item.note + "</p>" +
-    "<p><a href='index.html'>← 返回列表</a></p>";
-}
+## 目录结构
 
-// ===== 页面一打开，判断该跑哪一段 =====
-if (document.body.dataset.page === "list") showList();
-if (document.body.dataset.page === "detail") showDetail();
+| 文件 | 作用 |
+| --- | --- |
+| `index.html` | 列表页，页面骨架 |
+| `detail.html` | 详情页，靠网址里的 `?id=` 决定看哪一条 |
+| `style.css` | 样式，含 375px 手机适配 |
+| `app.js` | 数据 + 列表渲染 + 筛选交互 + 详情页渲染 |
+| `.gitignore` | 声明哪些文件不传到仓库 |
+| `.nojekyll` | 告诉 GitHub Pages 不要用 Jekyll 处理这些文件 |
+| `README.md` | 本文件 |
+
+## 线上地址
+
+https://你的用户名.github.io/web-phase4-李昊泽/
+
+## 任务 1 自检
+
+- [x] 至少 2 个页面，并能互相跳转
+- [x] 使用语义化标签 header / nav / main / section / footer
+- [x] 375px 宽度下无横向滚动条
+- [x] 1 处 JavaScript 交互（列表筛选）
+- [x] 控制台无红色报错
+- [ ] 手机端截图与抓包记录（放在周记里，不进仓库）
