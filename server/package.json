@@ -1,0 +1,17 @@
+{
+  "name": "webone-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "26级第四阶段 任务2：待办清单接口",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "engines": {
+    "node": ">=22.5"
+  },
+  "dependencies": {
+    "express": "^5.0.0"
+  }
+}
