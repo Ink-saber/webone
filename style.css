@@ -3,7 +3,7 @@
 body {
   margin: 0;
   font-family: "Microsoft YaHei", sans-serif;
-  background: #f6f7f9;
+  background: #eff1f1;
   color: #222;
   line-height: 1.6;
 }
@@ -84,4 +84,94 @@ h2 { font-size: 20px; margin: 0 0 8px; word-break: break-word; }
 @media (max-width: 480px) {
   h1 { font-size: 20px; }
   section { padding: 12px; }
+}
+
+/* ============================================================
+   任务 3 新增：新增表单、工具栏、三种状态、删除按钮
+   ============================================================ */
+
+/* 新增表单 */
+.add-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+#new-title {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+#new-title:focus { border-color: #0969da; outline: none; }
+
+#add-btn {
+  padding: 8px 16px;
+  font-size: 14px;
+  border: none;
+  border-radius: 6px;
+  background: #1a7f37;
+  color: #fff;
+  cursor: pointer;
+  white-space: nowrap;
+}
+#add-btn:disabled { background: #9fc9a8; cursor: default; }
+
+/* 工具栏：筛选 + 只看未完成 */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.toolbar #search { flex: 1; min-width: 140px; margin-bottom: 0; }
+.check { font-size: 13px; color: #555; white-space: nowrap; cursor: pointer; }
+
+/* 三种状态 */
+.state {
+  padding: 24px 8px;
+  text-align: center;
+  color: #666;
+  font-size: 14px;
+}
+.state.error {
+  text-align: left;
+  color: #b00;
+  background: #fff5f5;
+  border: 1px solid #ffd0d0;
+  border-radius: 8px;
+}
+.state.error p { margin: 0 0 12px; word-break: break-word; }
+
+#retry {
+  padding: 6px 14px;
+  font-size: 13px;
+  border: 1px solid #b00;
+  border-radius: 6px;
+  background: #fff;
+  color: #b00;
+  cursor: pointer;
+}
+
+/* 删除按钮 */
+.del {
+  flex: none;
+  padding: 3px 10px;
+  font-size: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background: #fff;
+  color: #b00;
+  cursor: pointer;
+}
+.del:hover { background: #fff5f5; border-color: #ffd0d0; }
+.del:disabled { color: #bbb; border-color: #eee; cursor: default; }
+
+/* 手机：表单竖排 */
+@media (max-width: 480px) {
+  .add-form { flex-direction: column; }
+  #add-btn { width: 100%; }
 }

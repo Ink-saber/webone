@@ -1,8 +1,9 @@
-# 待办清单接口文档（任务 2）
+# 待办清单接口文档（任务 2 + 任务 3）
 
 - 本地地址：`http://localhost:4000`
 - 数据存储：SQLite，数据库文件 `server/data.db`
 - 所有接口返回格式统一为 `{ code, data, msg }`
+- 已开启跨域（CORS），网页可以直接调用
 
 | 字段 | 含义 |
 | --- | --- |
@@ -19,10 +20,11 @@ HTTP 状态码同时使用：`200`/`201` 成功、`400` 参数错误、`404` 找
 | # | 方法 | 路径 | 作用 | 参数 | 成功状态码 |
 | --- | --- | --- | --- | --- | --- |
 | 1 | GET | `/api/items` | 查列表 | 可选查询参数 `done`、`q` | 200 |
-| 2 | POST | `/api/items` | 新增一条 | 请求体 JSON：`title`（必填）、`note`、`done` | 201 |
-| 3 | DELETE | `/api/items/:id` | 删除一条 | 路径参数 `id` | 200 |
-| 4 | PUT | `/api/items/:id` | 修改一条（选做） | 路径参数 `id` + 请求体任意字段 | 200 |
-| 5 | GET | `/` | 自检服务是否活着 | 无 | 200 |
+| 2 | GET | `/api/items/:id` | 查某一条 | 路径参数 `id` | 200 |
+| 3 | POST | `/api/items` | 新增一条 | 请求体 JSON：`title`（必填）、`note`、`done` | 201 |
+| 4 | DELETE | `/api/items/:id` | 删除一条 | 路径参数 `id` | 200 |
+| 5 | PUT | `/api/items/:id` | 修改一条（选做） | 路径参数 `id` + 请求体任意字段 | 200 |
+| 6 | GET | `/` | 自检服务是否活着 | 无 | 200 |
 
 ---
 
@@ -50,12 +52,12 @@ curl.exe http://localhost:4000/api/items
     {
       "id": 1,
       "title": "任务1：静态页面上线",
-      "note": "已经拿到 https 网址，抓包和 404 截图都做了。",
+      "note": "已经拿到 https 网址。",
       "done": true,
-      "createdAt": "2026-11-12 20:05:11"
+      "createdAt": "2026-11-12 20:05:16"
     }
   ],
-  "msg": "共 7 条"
+  "msg": "共 8 条"
 }
 ```
 
@@ -68,7 +70,51 @@ curl.exe "http://localhost:4000/api/items?q=接口"
 
 ---
 
-## 2. POST /api/items —— 新增一条
+## 2. GET /api/items/:id —— 查某一条（任务 3 新增）
+
+详情页就是靠它拿到数据。
+
+**参数**
+
+| 参数 | 位置 | 必填 | 类型 | 说明 |
+| --- | --- | --- | --- | --- |
+| `id` | 路径 | 是 | 正整数 | 待办编号 |
+
+**请求**
+
+```bash
+curl.exe http://localhost:4000/api/items/1
+```
+
+**返回示例（200）**
+
+```json
+{
+  "code": 0,
+  "data": {
+    "id": 1,
+    "title": "任务1：静态页面上线",
+    "note": "已经拿到 https 网址。",
+    "done": true,
+    "createdAt": "2026-11-12 20:05:16"
+  },
+  "msg": "ok"
+}
+```
+
+**编号不存在（404）**
+
+```bash
+curl.exe http://localhost:4000/api/items/9999
+```
+
+```json
+{ "code": 4004, "data": null, "msg": "没有编号为 9999 的待办" }
+```
+
+---
+
+## 3. POST /api/items —— 新增一条
 
 **参数（请求体 JSON）**
 
@@ -78,16 +124,12 @@ curl.exe "http://localhost:4000/api/items?q=接口"
 | `note` | 否 | 字符串 | 最多 500 个字，默认空 |
 | `done` | 否 | 布尔 | 默认 `false` |
 
-**请求**
+**请求**（Windows 命令行里 JSON 带引号容易被吃掉，所以写进文件再发）
 
-```bash
-curl.exe -X POST http://localhost:4000/api/items ^
-  -H "Content-Type: application/json" ^
-  -d '{"title":"test from curl","note":"hello","done":false}'
+```powershell
+[IO.File]::WriteAllText("$env:TEMP\body.json", '{"title":"curl test","note":"hello"}', [Text.UTF8Encoding]::new($false))
+curl.exe -X POST http://localhost:4000/api/items -H Content-Type:application/json --data-binary "@$env:TEMP\body.json"
 ```
-
-> PowerShell 里用反引号 `` ` `` 换行更稳；或者干脆写成一整行。
-> 中文可能因终端编码变乱码，测试时先用英文，要测中文先执行 `chcp 65001`。
 
 **返回示例（201）**
 
@@ -95,29 +137,17 @@ curl.exe -X POST http://localhost:4000/api/items ^
 {
   "code": 0,
   "data": {
-    "id": 8,
-    "title": "test from curl",
+    "id": 11,
+    "title": "curl test",
     "note": "hello",
     "done": false,
-    "createdAt": "2026-11-12 20:10:32"
+    "createdAt": "2026-11-13 20:14:02"
   },
   "msg": "新增成功"
 }
 ```
 
-**参数错误（400）**
-
-```bash
-curl.exe -X POST http://localhost:4000/api/items -H "Content-Type: application/json" -d '{}'
-```
-
-```json
-{ "code": 4001, "data": null, "msg": "title 必填，且必须是字符串" }
-```
-
-```bash
-curl.exe -X POST http://localhost:4000/api/items -H "Content-Type: application/json" -d '{"title":123}'
-```
+**参数错误（400）**：发空对象 `{}` 或 `{"title":123}`
 
 ```json
 { "code": 4001, "data": null, "msg": "title 必填，且必须是字符串" }
@@ -125,31 +155,17 @@ curl.exe -X POST http://localhost:4000/api/items -H "Content-Type: application/j
 
 ---
 
-## 3. DELETE /api/items/:id —— 删除一条
-
-**参数**
-
-| 参数 | 位置 | 必填 | 类型 | 说明 |
-| --- | --- | --- | --- | --- |
-| `id` | 路径 | 是 | 正整数 | 要删除的编号 |
-
-**请求**
+## 4. DELETE /api/items/:id —— 删除一条
 
 ```bash
-curl.exe -X DELETE http://localhost:4000/api/items/8
+curl.exe -X DELETE http://localhost:4000/api/items/11
 ```
-
-**返回示例（200）**
 
 ```json
 { "code": 0, "data": null, "msg": "删除成功" }
 ```
 
-**编号不存在（404）**
-
-```bash
-curl.exe -X DELETE http://localhost:4000/api/items/99999
-```
+编号不存在返回 404：
 
 ```json
 { "code": 4004, "data": null, "msg": "没有编号为 99999 的待办" }
@@ -157,19 +173,14 @@ curl.exe -X DELETE http://localhost:4000/api/items/99999
 
 ---
 
-## 4. PUT /api/items/:id —— 修改一条（选做）
+## 5. PUT /api/items/:id —— 修改一条（选做）
 
 只传要改的字段，没传的保持原样。
 
-**请求**
-
-```bash
-curl.exe -X PUT http://localhost:4000/api/items/2 ^
-  -H "Content-Type: application/json" ^
-  -d '{"done":true}'
+```powershell
+[IO.File]::WriteAllText("$env:TEMP\b2.json", '{"done":true}', [Text.UTF8Encoding]::new($false))
+curl.exe -X PUT http://localhost:4000/api/items/2 -H Content-Type:application/json --data-binary "@$env:TEMP\b2.json"
 ```
-
-**返回示例（200）**
 
 ```json
 {
@@ -181,39 +192,54 @@ curl.exe -X PUT http://localhost:4000/api/items/2 ^
 
 ---
 
-## 5. GET / —— 自检
+## 6. GET / —— 自检
 
 ```bash
 curl.exe http://localhost:4000
 ```
 
 ```json
-{ "code": 0, "data": { "service": "webone 待办清单接口", "task": "任务2" }, "msg": "服务正在运行" }
+{ "code": 0, "data": { "service": "webone 待办清单接口", "task": "任务3" }, "msg": "服务正在运行" }
 ```
 
 ---
 
-## 兜底行为
+## 跨域（CORS）
 
-**访问不存在的路径**
+**问题现象**：网页在 `http://localhost:3000`，接口在 `http://localhost:4000`，端口不同就算不同源。浏览器控制台会红字报：
+
+```
+Access to fetch at 'http://localhost:4000/api/items' from origin
+'http://localhost:3000' has been blocked by CORS policy:
+No 'Access-Control-Allow-Origin' header is present on the requested resource.
+```
+
+**原因**：这是浏览器的安全策略，不是接口写错了。`curl` 测试完全正常，只有浏览器会拦。
+
+**解决**：必须由服务端明确允许。`server/index.js` 里加了这段中间件：
+
+```js
+app.use(function (req, res, next) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  if (req.method === "OPTIONS") {
+    res.status(204).end();
+    return;
+  }
+  next();
+});
+```
+
+**验证方法**
 
 ```bash
-curl.exe http://localhost:4000/api/nothing
+curl.exe -i -H "Origin: http://localhost:3000" http://localhost:4000/api/items
 ```
 
-```json
-{ "code": 4004, "data": null, "msg": "没有这个接口：GET /api/nothing" }
-```
+返回头里应该出现 `Access-Control-Allow-Origin: *`。
 
-**请求体不是合法 JSON**
-
-```bash
-curl.exe -X POST http://localhost:4000/api/items -H "Content-Type: application/json" -d '{bad json'
-```
-
-```json
-{ "code": 4001, "data": null, "msg": "请求体不是合法的 JSON" }
-```
+浏览器在发 POST 之前还会先发一个 `OPTIONS` 探路请求，所以那段中间件要单独回它 `204`，否则 POST 会失败但 GET 正常——这是很容易漏的一点。
 
 ---
 
@@ -221,37 +247,21 @@ curl.exe -X POST http://localhost:4000/api/items -H "Content-Type: application/j
 
 ```powershell
 cd D:\webone\server
-npm install        # 只需第一次
+npm install      # 只需第一次
 npm start
-```
-
-看到这段说明启动成功：
-
-```
-  接口服务已启动
-  地址：http://localhost:4000
 ```
 
 停止：`Ctrl + C`。
 
 ---
 
-## 自测清单（对应任务书验收标准）
+## 自测清单
 
-- [ ] `curl.exe http://localhost:4000/api/items` 返回 7 条，`code` 是 0
+- [ ] `curl.exe http://localhost:4000/api/items` 返回 `code: 0`
 - [ ] 新增一条后，再查列表能多一条
 - [ ] 删除刚新增那条，能删掉
+- [ ] `curl.exe http://localhost:4000/api/items/1` 能按编号查到
 - [ ] 删一个不存在的 id，返回 404 而不是崩掉
 - [ ] 传空 `title`，返回 400 并说明原因，服务没崩
-- [ ] `Ctrl + C` 停服务，再 `npm start`，**之前新增的数据还在**（这就是"数据落盘"）
-- [ ] 访问 `/api/nothing`，返回 JSON 而不是 HTML 报错页
-
----
-
-## 已知行为（不是 bug）
-
-**没有开跨域（CORS）。** 用 `curl` 测试不受影响；但任务 3 在浏览器里让前端直接调这个接口时，浏览器会拦下请求并报 `blocked by CORS policy`。这是任务 3 要专门处理的事——任务书要求"撞到 CORS，要在服务端加跨域响应头解决"，所以这里故意先不加。
-
-**数据库文件 `data.db` 不进 git。** 它在 `.gitignore` 里。所以别人 clone 下来第一次运行时会自动建表并写入 7 条种子数据（见 `db.js`），不会打开是空的。
-
-**端口是 4000，不是 3000。** 因为任务 3 会用 `npx serve .` 起前端，它默认占用 3000，两个都用 3000 会冲突。
+- [ ] `Ctrl + C` 停服务再 `npm start`，之前新增的数据还在
+- [ ] 带 `Origin` 头请求时，响应里有 `Access-Control-Allow-Origin`

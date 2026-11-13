@@ -20,10 +20,35 @@
 
   <main>
     <section>
-      <input id="search" type="search" placeholder="输入关键字筛选，比如：接口">
-      <p id="count"></p>
-      <ul id="list"></ul>
-      <p id="empty" hidden>没有匹配的待办</p>
+
+      <!-- 新增：回车或点按钮都能提交 -->
+      <form id="add-form" class="add-form">
+        <input id="new-title" type="text" maxlength="100"
+               placeholder="新增一条待办，写完按回车" required>
+        <button id="add-btn" type="submit">新增</button>
+      </form>
+
+      <!-- 工具栏：关键字筛选 + 只看未完成 -->
+      <div class="toolbar">
+        <input id="search" type="search" placeholder="按关键字筛选">
+        <label class="check">
+          <input id="only-todo" type="checkbox"> 只看未完成
+        </label>
+      </div>
+
+      <p id="count" class="count"></p>
+
+      <!-- 三种状态，同一时间只会显示一个 -->
+      <p id="loading" class="state" hidden>加载中…</p>
+      <p id="empty" class="state" hidden>还没有待办</p>
+      <div id="error" class="state error" hidden>
+        <p id="error-msg"></p>
+        <button id="retry" type="button">重试</button>
+      </div>
+
+      <!-- 有数据时显示这个 -->
+      <ul id="list" class="list" hidden></ul>
+
     </section>
   </main>
 
@@ -31,6 +56,8 @@
     <p>© 2026 李昊泽</p>
   </footer>
 
+  <!-- config.js 必须在 app.js 前面，因为 app.js 要用里面的 API_BASE -->
+  <script src="config.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

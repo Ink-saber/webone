@@ -1,159 +1,312 @@
 /* ============================================================
-   这个文件是网页的「动作」部分，只做两件事：
-     1. 列表页：把 7 条数据画成一列，并支持搜索筛选
-     2. 详情页：从网址里取出 ?id=N，找到那一条，画出详情
-   页面一打开会判断自己是谁（看 <body data-page="...">），
-   然后只运行对应的那一个函数。
+   app.js —— 任务 3：数据不再写死在文件里，改成向服务器要
+
+   和任务 1 最大的区别：
+     任务 1  数据在文件里  → 打开页面直接画
+     任务 3  数据在服务器  → 打开页面先发请求，等它回来再画
+
+   所以多了「等待」这件事，页面就有了三种状态：
+     加载中（loading）  请求已发出，结果还没回来
+     空数据（empty）    回来了，但一条都没有
+     请求失败（error）  没成功，给个「重试」按钮
    ============================================================ */
 
-
-/* ---------- 一、数据 ---------- */
-
-// 暂时直接写在代码里（任务 3 会改成从服务器读取）
-// 每条数据有 4 个项目：
-//   id   编号，唯一，详情页靠它找到这一条
-//   title 标题，显示在列表里
-//   done 是否完成，true=已完成，false=待办
-//   note 说明，只有详情页显示
-const items = [
-  { id: 1, title: "任务1：静态页面上线", done: true,
-    note: "已经拿到 https 网址，抓包和 404 截图都做了。" },
-  { id: 2, title: "任务2：写 3 个接口，数据落盘", done: false,
-    note: "查看列表 / 新增 / 删除三个通道，服务重启后数据还在。" },
-  { id: 3, title: "任务3：前后端联调，做出增删查闭环", done: false,
-    note: "加载中、空数据、请求失败三种状态都要有。" },
-  { id: 4, title: "任务4：接入大模型，做流式对话页", done: false,
-    note: "文字一个一个蹦出来，密钥只放在服务器上。" },
-  { id: 5, title: "任务5：工具调用，让模型操作数据", done: false,
-    note: "一句自然语言，数据库真的多一条。" },
-  { id: 6, title: "任务6：整合交付与答辩", done: false,
-    note: "README 能让别人 10 分钟跑起来。" },
-  { id: 7, title: "贯穿全程：每天一次提交 + 周记", done: false,
-    note: "提交记录就是本周的真实进度。" }
-];
+// 后端地址来自 config.js，不写死在这里
+const API = CONFIG.API_BASE;
 
 
-/* ---------- 二、列表页 ---------- */
+/* ============================================================
+   一、列表页
+   ============================================================ */
+function initListPage() {
 
-// 在列表页被调用一次
-function showList() {
+  // 把页面上要用到的元素先找好，后面直接用
+  const el = {
+    form:     document.getElementById("add-form"),
+    newTitle: document.getElementById("new-title"),
+    addBtn:   document.getElementById("add-btn"),
+    search:   document.getElementById("search"),
+    onlyTodo: document.getElementById("only-todo"),
+    count:    document.getElementById("count"),
+    list:     document.getElementById("list"),
+    loading:  document.getElementById("loading"),
+    empty:    document.getElementById("empty"),
+    errorBox: document.getElementById("error"),
+    errorMsg: document.getElementById("error-msg"),
+    retry:    document.getElementById("retry")
+  };
 
-  // 先在页面上找到 4 个需要用到的地方
-  const listEl   = document.getElementById("list");    // 放列表的空盒子 <ul>
-  const countEl  = document.getElementById("count");   // 显示「共几条」
-  const emptyEl  = document.getElementById("empty");   // 「没有匹配」的提示
-  const searchEl = document.getElementById("search");  // 搜索框
+  // 内存里存一份服务器给的数据，筛选时不用反复请求
+  let allItems = [];
+  let keyword = "";
+  let onlyTodoOn = false;
 
-  // draw 的意思是「画一遍」。给它一个关键字，它按关键字重新画整个列表
-  function draw(keyword) {
 
-    const kw = keyword.trim();   // 去掉首尾空格
-
-    // 从 7 条里挑出标题包含关键字的那些
-    // 关键字是空的时候，每一条都包含空字符串，所以 7 条全留下
-    const shown = items.filter(function (it) {
-      return it.title.includes(kw);
-    });
-
-    // 画之前先清空，否则每输入一个字就往下叠一遍
-    listEl.innerHTML = "";
-
-    // 把挑出来的每一条，画成一个 <li>
-    shown.forEach(function (it) {
-
-      const li = document.createElement("li");   // 造一个「一行」的盒子
-
-      // 1) 状态标签：已完成绿色，待办红色
-      const badge = document.createElement("span");
-      badge.className = it.done ? "badge done" : "badge";
-      badge.textContent = it.done ? "已完成" : "待办";
-
-      // 2) 可点的标题，点了跳到详情页，网址带上这条的编号
-      const a = document.createElement("a");
-      a.className = "item-title";
-      if (it.done) a.classList.add("done-text");   // 已完成的标题加删除线
-      a.href = "detail.html?id=" + it.id;
-      a.textContent = it.title;
-
-      // 3) 把标签和标题挂到这一行里，再把这一行挂到列表里
-      li.appendChild(badge);
-      li.appendChild(a);
-      listEl.appendChild(li);
-    });
-
-    // 更新上面那行「共 N 条，显示 M 条」
-    countEl.textContent = "共 " + items.length + " 条，显示 " + shown.length + " 条";
-
-    // 一条都没剩下的时候，把「没有匹配」的提示显示出来
-    emptyEl.hidden = shown.length !== 0;
+  /* ---------- 控制四种显示状态 ---------- */
+  function setState(state) {
+    el.loading.hidden = state !== "loading";
+    el.empty.hidden   = state !== "empty";
+    el.errorBox.hidden = state !== "error";
+    el.list.hidden    = state === "loading" || state === "empty" || state === "error";
   }
 
-  // 这是任务书要求的「1 处 JS 交互」：
-  // 搜索框内容一变化（每敲一个字），就按当前内容重画一次
-  searchEl.addEventListener("input", function (e) {
-    draw(e.target.value);
+
+  /* ---------- 向服务器要数据 ---------- */
+  async function loadItems() {
+    setState("loading");
+    el.count.textContent = "";
+    el.list.innerHTML = "";
+
+    try {
+      const res = await fetch(API + "/items");
+
+      // 第一层判断：HTTP 状态码是不是 2xx
+      if (!res.ok) {
+        throw new Error("服务器返回状态码 " + res.status);
+      }
+
+      const json = await res.json();
+
+      // 第二层判断：接口自己的 code 是不是 0
+      if (json.code !== 0) {
+        throw new Error(json.msg || "接口返回失败");
+      }
+
+      allItems = json.data || [];
+      render();
+    } catch (err) {
+      el.errorMsg.textContent =
+        "加载失败：" + err.message +
+        "。请确认后端已经在 " + API + " 启动。";
+      setState("error");
+    }
+  }
+
+
+  /* ---------- 按当前筛选条件画列表 ---------- */
+  function render() {
+    const kw = keyword.trim().toLowerCase();
+
+    const shown = allItems.filter(function (it) {
+      if (onlyTodoOn && it.done) return false;
+      return String(it.title).toLowerCase().indexOf(kw) !== -1;
+    });
+
+    el.list.innerHTML = "";
+    shown.forEach(function (it) {
+      el.list.appendChild(createRow(it));
+    });
+
+    el.count.textContent = "共 " + allItems.length + " 条，显示 " + shown.length + " 条";
+
+    if (shown.length === 0) {
+      el.empty.textContent = allItems.length === 0
+        ? "还没有待办，在上面输入一条试试"
+        : "没有符合筛选条件的待办";
+      setState("empty");
+      return;
+    }
+
+    setState("data");
+  }
+
+
+  /* ---------- 画一条 ---------- */
+  function createRow(it) {
+    const li = document.createElement("li");
+
+    const badge = document.createElement("span");
+    badge.className = it.done ? "badge done" : "badge";
+    badge.textContent = it.done ? "已完成" : "待办";
+
+    const a = document.createElement("a");
+    a.className = "item-title";
+    if (it.done) a.classList.add("done-text");
+    a.href = "detail.html?id=" + it.id;
+    a.textContent = it.title;
+
+    const del = document.createElement("button");
+    del.type = "button";
+    del.className = "del";
+    del.textContent = "删除";
+    del.addEventListener("click", function () {
+      deleteItem(it, del);
+    });
+
+    li.appendChild(badge);
+    li.appendChild(a);
+    li.appendChild(del);
+    return li;
+  }
+
+
+  /* ---------- 删除一条 ---------- */
+  async function deleteItem(it, btn) {
+    if (!window.confirm("确定删除「" + it.title + "」？")) return;
+
+    btn.disabled = true;
+    btn.textContent = "删除中";
+
+    try {
+      const res = await fetch(API + "/items/" + it.id, { method: "DELETE" });
+      const json = await res.json().catch(function () { return {}; });
+
+      if (!res.ok || json.code !== 0) {
+        throw new Error(json.msg || ("服务器返回 " + res.status));
+      }
+
+      // 删完重新拉一遍列表，保证页面和数据库一致
+      await loadItems();
+    } catch (err) {
+      window.alert("删除失败：" + err.message);
+      btn.disabled = false;
+      btn.textContent = "删除";
+    }
+  }
+
+
+  /* ---------- 新增一条 ---------- */
+  el.form.addEventListener("submit", async function (e) {
+    e.preventDefault();   // 阻止表单默认的「刷新页面」行为
+
+    const title = el.newTitle.value.trim();
+    if (!title) {
+      window.alert("标题不能为空");
+      return;
+    }
+
+    el.addBtn.disabled = true;
+    el.addBtn.textContent = "提交中";
+
+    try {
+      const res = await fetch(API + "/items", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        // JSON.stringify 负责把对象变成文字，中文和引号都不用你操心
+        body: JSON.stringify({ title: title })
+      });
+
+      const json = await res.json().catch(function () { return {}; });
+
+      if (!res.ok || json.code !== 0) {
+        throw new Error(json.msg || ("服务器返回 " + res.status));
+      }
+
+      el.newTitle.value = "";
+      await loadItems();
+    } catch (err) {
+      window.alert("新增失败：" + err.message);
+    } finally {
+      el.addBtn.disabled = false;
+      el.addBtn.textContent = "新增";
+    }
   });
 
-  // 打开页面时不会自动画，必须主动叫它画一次
-  draw("");
+
+  /* ---------- 筛选、只看未完成、重试 ---------- */
+  el.search.addEventListener("input", function (e) {
+    keyword = e.target.value;
+    render();
+  });
+
+  el.onlyTodo.addEventListener("change", function (e) {
+    onlyTodoOn = e.target.checked;
+    render();
+  });
+
+  el.retry.addEventListener("click", function () {
+    loadItems();
+  });
+
+
+  // 页面一打开就去要数据
+  loadItems();
 }
 
 
-/* ---------- 三、详情页 ---------- */
+/* ============================================================
+   二、详情页
+   ============================================================ */
+function initDetailPage() {
 
-// 在详情页被调用一次
-function showDetail() {
-
-  const box = document.getElementById("detail");   // 放内容的空盒子
-
-  // 从网址里取出 id。比如网址是 detail.html?id=3，
-  // location.search 是 "?id=3"，取出字符串 "3" 再用 Number 变成数字
+  const box = document.getElementById("detail");
   const id = Number(new URLSearchParams(location.search).get("id"));
 
-  // 在 7 条数据里找编号等于 id 的那一条
-  const item = items.find(function (it) {
-    return it.id === id;
-  });
-
-  // 找不到（比如网址被改成了 ?id=999）
-  if (!item) {
-    const tip = document.createElement("p");
-    tip.className = "empty";
-    tip.textContent = "找不到这条，id 可能是错的。";
-    box.appendChild(tip);
-    return;   // 后面的不用做了
+  function showMessage(text, isError) {
+    box.innerHTML = "";
+    const p = document.createElement("p");
+    p.className = isError ? "state error" : "state";
+    p.textContent = text;
+    box.appendChild(p);
   }
 
-  // 找得到：标题、编号和状态、说明、返回链接
-  const title = document.createElement("h2");
-  title.textContent = item.title;
+  function showBack() {
+    const p = document.createElement("p");
+    const a = document.createElement("a");
+    a.href = "index.html";
+    a.textContent = "← 返回列表";
+    p.appendChild(a);
+    box.appendChild(p);
+  }
 
-  const meta = document.createElement("p");
-  meta.className = "meta";
-  meta.textContent = "编号 #" + item.id + " · " + (item.done ? "已完成" : "待办");
+  function renderDetail(it) {
+    box.innerHTML = "";
 
-  const note = document.createElement("p");
-  note.textContent = item.note;
+    const status = document.createElement("span");
+    status.className = it.done ? "badge done" : "badge";
+    status.textContent = it.done ? "已完成" : "待办";
 
-  const back = document.createElement("p");
-  const backLink = document.createElement("a");
-  backLink.href = "index.html";
-  backLink.textContent = "← 返回列表";
-  back.appendChild(backLink);
+    const h2 = document.createElement("h2");
+    h2.textContent = it.title;
 
-  box.appendChild(title);
-  box.appendChild(meta);
-  box.appendChild(note);
-  box.appendChild(back);
+    const meta = document.createElement("p");
+    meta.className = "meta";
+    meta.textContent = "编号 #" + it.id + (it.createdAt ? " · 创建于 " + it.createdAt : "");
+
+    const note = document.createElement("p");
+    note.textContent = it.note ? it.note : "（这条没有写说明）";
+
+    box.appendChild(status);
+    box.appendChild(h2);
+    box.appendChild(meta);
+    box.appendChild(note);
+    showBack();
+  }
+
+  async function load() {
+    showMessage("加载中…", false);
+
+    if (!Number.isInteger(id) || id <= 0) {
+      showMessage("网址里的 id 不对，应该是 detail.html?id=1 这种形式", true);
+      showBack();
+      return;
+    }
+
+    try {
+      const res = await fetch(API + "/items/" + id);
+      const json = await res.json().catch(function () { return {}; });
+
+      if (!res.ok || json.code !== 0) {
+        throw new Error(json.msg || ("服务器返回 " + res.status));
+      }
+
+      renderDetail(json.data);
+    } catch (err) {
+      showMessage("加载失败：" + err.message, true);
+      showBack();
+    }
+  }
+
+  load();
 }
 
 
-/* ---------- 四、入口 ---------- */
-
-// 两个页面共用这一个文件，靠 <body data-page="list|detail"> 区分该跑哪段
+/* ============================================================
+   三、入口：两个页面共用这一个文件，靠 <body data-page> 区分
+   ============================================================ */
 if (document.body.dataset.page === "list") {
-  showList();
+  initListPage();
 }
 if (document.body.dataset.page === "detail") {
-  showDetail();
+  initDetailPage();
 }
