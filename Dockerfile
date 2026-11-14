@@ -5,7 +5,8 @@
 # 导致 /api/... 全部 404。放了 Dockerfile 之后，Railway 会优先用 Docker 构建，
 # 明确只跑 server/ 里的 Node 程序。
 #
-# 用 Node 24：node:sqlite 从 23.4 起不再需要加实验参数，24 是当前 LTS。
+# 存储用的是纯 JS 的 JSON 文件（server/store.js），不依赖 node:sqlite，
+# 所以对 Node 版本没有硬要求，这里取 24 只是求稳。
 
 FROM node:24-alpine
 
@@ -16,7 +17,7 @@ COPY server/package.json server/package-lock.json ./
 RUN npm install --omit=dev
 
 # 再拷源码
-COPY server/index.js server/db.js ./
+COPY server/index.js server/store.js ./
 
 ENV NODE_ENV=production
 
