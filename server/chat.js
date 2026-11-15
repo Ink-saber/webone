@@ -113,9 +113,25 @@ function register(app, fail) {
     res.setHeader("X-Accel-Buffering", "no");   // 让代理不要攒着不发
     res.flushHeaders();
 
+    // 关掉 Nagle 算法，让每个小包尽快发出去，而不是攒一会儿再发
+    if (res.socket) res.socket.setNoDelay(true);
+
+    let lastWriteAt = Date.now();
+
     const send = function (obj) {
+      lastWriteAt = Date.now();
       res.write("data: " + JSON.stringify(obj) + "\n\n");
     };
+
+    // 心跳：模型输出偶尔会停顿，云平台的代理看到一段时间没有数据，
+    // 会把连接挂起、攒够一波再一次性转发，表现出来就是「卡一下，哗啦一大片」。
+    // 每 200 毫秒补一个 SSE 注释行，让数据始终在流动。前端会忽略注释行。
+    const heartbeat = setInterval(function () {
+      if (Date.now() - lastWriteAt > 200) {
+        lastWriteAt = Date.now();
+        res.write(": ping\n\n");
+      }
+    }, 200);
 
     // 用户点「停止生成」时，浏览器会断开连接，我们把上游请求也中断。
     //
@@ -196,6 +212,8 @@ function register(app, fail) {
       send({ error: "连接模型服务失败：" + err.message });
       send({ done: true });
       res.end();
+    } finally {
+      clearInterval(heartbeat);
     }
   });
 }
