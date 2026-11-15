@@ -17,7 +17,9 @@ const input = document.getElementById("chat-input");
 const sendBtn = document.getElementById("send-btn");
 const stopBtn = document.getElementById("stop-btn");
 const statusEl = document.getElementById("chat-status");
-const hintEl = document.getElementById("chat-hint");
+let hintEl = document.getElementById("chat-hint");
+const turnEl = document.getElementById("turn-count");
+const newChatBtn = document.getElementById("new-chat-btn");
 
 // 浏览器这边保存的对话历史，每轮把完整历史发给后端（后端会裁剪长度）
 const history = [];
@@ -52,6 +54,34 @@ function addBubble(role, text) {
 
   return { wrap, p };
 }
+
+/* ---------- 轮数与新对话 ---------- */
+
+function updateTurnCount() {
+  const turns = history.filter(function (m) { return m.role === "user"; }).length;
+  turnEl.textContent = turns > 0 ? "已进行 " + turns + " 轮" : "";
+}
+
+function startNewChat() {
+  // 如果正在生成，先停掉
+  if (busy && controller) controller.abort();
+
+  // 清空浏览器这边的历史，下一句话就是全新的开始
+  history.length = 0;
+  messagesEl.innerHTML = "";
+
+  hintEl = document.createElement("p");
+  hintEl.className = "state";
+  hintEl.id = "chat-hint";
+  hintEl.textContent = "新的对话。之前的内容已清空。";
+  messagesEl.appendChild(hintEl);
+
+  setStatus("");
+  updateTurnCount();
+}
+
+newChatBtn.addEventListener("click", startNewChat);
+
 
 /* ---------- 发一条消息 ---------- */
 
@@ -153,6 +183,7 @@ async function sendMessage(text) {
   } finally {
     setBusy(false);
     controller = null;
+    updateTurnCount();
   }
 }
 
