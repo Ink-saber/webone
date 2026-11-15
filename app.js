@@ -286,10 +286,122 @@ function initDetailPage() {
     note.className = "note-text";
     note.textContent = it.note ? it.note : "（这条没有写说明）";
 
+    const editBtn = document.createElement("button");
+    editBtn.type = "button";
+    editBtn.className = "btn-ghost";
+    editBtn.textContent = "编辑";
+    editBtn.addEventListener("click", function () { renderEditForm(it); });
+
+    const actions = document.createElement("p");
+    actions.className = "detail-actions";
+    actions.appendChild(editBtn);
+
     box.appendChild(status);
     box.appendChild(h2);
     box.appendChild(meta);
     box.appendChild(note);
+    box.appendChild(actions);
+    showBack();
+  }
+
+  /* ---------- 编辑模式 ---------- */
+  function renderEditForm(it) {
+    box.innerHTML = "";
+
+    const form = document.createElement("form");
+    form.className = "stack-form";
+
+    const titleField = document.createElement("label");
+    titleField.className = "field";
+    const titleLabel = document.createElement("span");
+    titleLabel.textContent = "标题";
+    const titleInput = document.createElement("input");
+    titleInput.type = "text";
+    titleInput.maxLength = 100;
+    titleInput.value = it.title;
+    titleInput.required = true;
+    titleField.appendChild(titleLabel);
+    titleField.appendChild(titleInput);
+
+    const noteField = document.createElement("label");
+    noteField.className = "field";
+    const noteLabel = document.createElement("span");
+    noteLabel.textContent = "说明（可选）";
+    const noteInput = document.createElement("textarea");
+    noteInput.rows = 5;
+    noteInput.maxLength = 500;
+    noteInput.value = it.note || "";
+    noteField.appendChild(noteLabel);
+    noteField.appendChild(noteInput);
+
+    const doneLabel = document.createElement("label");
+    doneLabel.className = "check";
+    const doneBox = document.createElement("input");
+    doneBox.type = "checkbox";
+    doneBox.checked = it.done;
+    doneLabel.appendChild(doneBox);
+    doneLabel.appendChild(document.createTextNode(" 已完成"));
+
+    const err = document.createElement("p");
+    err.className = "login-error";
+    err.hidden = true;
+
+    const actions = document.createElement("div");
+    actions.className = "form-actions";
+
+    const cancelBtn = document.createElement("button");
+    cancelBtn.type = "button";
+    cancelBtn.className = "btn-ghost";
+    cancelBtn.textContent = "取消";
+    cancelBtn.addEventListener("click", function () { renderDetail(it); });
+
+    const saveBtn = document.createElement("button");
+    saveBtn.type = "submit";
+    saveBtn.className = "btn-primary";
+    saveBtn.textContent = "保存";
+
+    actions.appendChild(cancelBtn);
+    actions.appendChild(saveBtn);
+
+    form.appendChild(titleField);
+    form.appendChild(noteField);
+    form.appendChild(doneLabel);
+    form.appendChild(err);
+    form.appendChild(actions);
+
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      err.hidden = true;
+      saveBtn.disabled = true;
+      saveBtn.textContent = "保存中";
+
+      try {
+        const res = await apiFetch("/items/" + it.id, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: titleInput.value.trim(),
+            note: noteInput.value.trim(),
+            done: doneBox.checked
+          })
+        });
+
+        const json = await res.json().catch(function () { return {}; });
+        if (!res.ok || json.code !== 0) {
+          throw new Error(json.msg || ("服务器返回 " + res.status));
+        }
+
+        renderDetail(json.data);
+      } catch (e2) {
+        err.textContent = "保存失败：" + e2.message;
+        err.hidden = false;
+        saveBtn.disabled = false;
+        saveBtn.textContent = "保存";
+      }
+    });
+
+    box.appendChild(form);
     showBack();
   }
 

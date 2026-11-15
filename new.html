@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新建</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="new">
+
+  <header class="site-header">
+    <div class="brand">
+      <h1>新建一条</h1>
+      <p class="subtitle">写清楚一点，以后回头看不用猜</p>
+    </div>
+    <div class="user-bar">
+      <span id="user-name" class="user-name"></span>
+      <button id="logout-btn" class="btn-text" type="button">退出</button>
+    </div>
+  </header>
+
+  <nav class="site-nav">
+    <a href="index.html">清单</a>
+    <a href="chat.html"><span data-ai-name>小记</span></a>
+  </nav>
+
+  <main>
+    <section class="panel">
+
+      <form id="new-form" class="stack-form">
+
+        <label class="field">
+          <span>标题 <em class="required-mark">必填</em></span>
+          <input id="title" type="text" maxlength="100" placeholder="要做什么？" required>
+        </label>
+
+        <label class="field">
+          <span>说明（可选）</span>
+          <textarea id="note" rows="5" maxlength="500"
+                    placeholder="补充背景、截止时间、具体步骤、相关链接……"></textarea>
+        </label>
+
+        <label class="check">
+          <input id="done" type="checkbox"> 创建时就标记为已完成
+        </label>
+
+        <p id="form-error" class="login-error" hidden></p>
+
+        <div class="form-actions">
+          <a class="btn-ghost" href="index.html">取消</a>
+          <button id="submit-btn" class="btn-primary" type="submit">创建</button>
+        </div>
+
+      </form>
+
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p><span data-site-name></span></p>
+  </footer>
+
+  <script src="config.js"></script>
+  <script src="branding.js"></script>
+  <script src="new.js"></script>
+</body>
+</html>
