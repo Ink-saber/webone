@@ -1,14 +1,16 @@
 /* ============================================================
    index.js —— 接口服务本体
-   跑起来之后，它会在 PORT 指定的端口上等你来问
-   一共五个接口 + 一个自检页，全部返回 { code, data, msg }
+   一共六个接口 + 一个自检页，全部返回 { code, data, msg }
+   其中 /api/chat 是流式的（SSE），不走统一 JSON 格式
 
-   存储换成 store.js（纯 JS 的 JSON 文件），不再依赖 node:sqlite，
-   所以在任何 Node 版本、任何云平台上都能起来。
+   启动顺序：先读 .env（拿 API Key），再起服务
    ============================================================ */
+
+require("./env");               // 必须先执行，把 .env 读进 process.env
 
 const express = require("express");
 const store = require("./store");
+const chat = require("./chat");
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -23,7 +25,6 @@ app.use(function (req, res, next) {
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  // 浏览器发 POST 前会先发 OPTIONS 探路，直接回 204
   if (req.method === "OPTIONS") {
     res.status(204).end();
     return;
@@ -45,7 +46,6 @@ function fail(res, status, code, msg) {
 
 /* ============================================================
    接口 1：GET /api/items —— 查列表
-   可选参数：?done=true|false  ?q=关键字
    ============================================================ */
 app.get("/api/items", function (req, res) {
   const opts = {};
@@ -152,7 +152,7 @@ app.put("/api/items/:id", function (req, res) {
 
   if (body.note !== undefined) {
     const note = typeof body.note === "string" ? body.note.trim() : "";
-    if (note.length > 500) return fail(res, 400, 4001, "note 最多 500 个字");
+    if (note.length > 500) return fail(res, 400, 4001, "note 最多 500 个字符");
     patch.note = note;
   }
 
@@ -168,10 +168,24 @@ app.put("/api/items/:id", function (req, res) {
 });
 
 /* ============================================================
+   接口 6：POST /api/chat —— 跟大模型对话（流式，SSE）
+   实现在 chat.js 里
+   ============================================================ */
+chat.register(app, fail);
+
+/* ============================================================
    自检页
    ============================================================ */
 app.get("/", function (req, res) {
-  ok(res, { service: "webone 待办清单接口", task: "任务3" }, "服务正在运行");
+  ok(
+    res,
+    {
+      service: "webone 待办清单接口",
+      task: "任务4",
+      hasApiKey: Boolean(process.env.DEEPSEEK_API_KEY)
+    },
+    "服务正在运行"
+  );
 });
 
 /* ============================================================
@@ -200,6 +214,7 @@ app.listen(PORT, "0.0.0.0", function () {
   console.log("");
   console.log("  接口服务已启动");
   console.log("  端口：" + PORT);
+  console.log("  大模型：" + (process.env.DEEPSEEK_API_KEY ? "已配置 Key" : "未配置 Key（/api/chat 会提示）"));
   console.log("  停止：按 Ctrl + C");
   console.log("");
 });

@@ -197,3 +197,89 @@ h2 { font-size: 20px; margin: 0 0 8px; word-break: break-word; }
 @media (max-width: 420px) {
   .list li { flex-wrap: wrap; }
 }
+
+/* ============================================================
+   任务 4：对话页
+   ============================================================ */
+
+.messages {
+  height: 420px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px;
+}
+
+.bubble {
+  max-width: 86%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.bubble p {
+  margin: 0;
+  white-space: pre-wrap;   /* 保留换行，但不吞空格 */
+  word-break: break-word;
+}
+.bubble.user {
+  align-self: flex-end;
+  background: #1a7f37;
+  color: #fff;
+  border-bottom-right-radius: 2px;
+}
+.bubble.assistant {
+  align-self: flex-start;
+  background: #f1f3f4;
+  color: #222;
+  border-bottom-left-radius: 2px;
+}
+.bubble.assistant.error {
+  background: #fff5f5;
+  border: 1px solid #ffd0d0;
+  color: #b00;
+}
+
+.chat-form {
+  border-top: 1px solid #eee;
+  margin-top: 10px;
+  padding-top: 12px;
+}
+
+#chat-input {
+  width: 100%;
+  resize: none;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  outline: none;
+}
+#chat-input:focus { border-color: #0969da; }
+
+.chat-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.chat-status { flex: 1; font-size: 12px; color: #888; }
+
+.send-btn, .stop-btn {
+  flex: none;
+  padding: 8px 16px;
+  font-size: 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: none;
+}
+.send-btn { background: #1a7f37; color: #fff; }
+.send-btn:disabled { background: #9fc9a8; cursor: default; }
+.stop-btn { background: #fff; color: #b00; border: 1px solid #ffd0d0; }
+
+@media (max-width: 480px) {
+  .messages { height: 360px; }
+  .bubble { max-width: 92%; }
+}
