@@ -55,6 +55,32 @@ function addBubble(role, text) {
   return { wrap, p };
 }
 
+/* ---------- 显示工具调用日志 ---------- */
+
+function renderToolEvent(reply, tool) {
+  let log = reply.wrap.querySelector(".tool-log");
+
+  if (!log) {
+    log = document.createElement("div");
+    log.className = "tool-log";
+    reply.wrap.insertBefore(log, reply.p);
+  }
+
+  const line = document.createElement("p");
+  line.className = "tool-line";
+
+  if (tool.phase === "start") {
+    const hasArgs = tool.args && Object.keys(tool.args).length > 0;
+    line.textContent = "调用 " + tool.name + " " + (hasArgs ? JSON.stringify(tool.args) : "（无参数）");
+  } else {
+    line.textContent = (tool.ok ? "成功 · " : "失败 · ") + tool.summary;
+    line.classList.add(tool.ok ? "ok" : "bad");
+  }
+
+  log.appendChild(line);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
 /* ---------- 轮数与新对话 ---------- */
 
 function updateTurnCount() {
@@ -149,6 +175,9 @@ async function sendMessage(text) {
           acc += json.text;
           reply.p.textContent = acc;
           messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
+        if (json.tool) {
+          renderToolEvent(reply, json.tool);
         }
         if (json.error) {
           errorMsg = json.error;

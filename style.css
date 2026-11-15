@@ -303,3 +303,23 @@ h2 { font-size: 20px; margin: 0 0 8px; word-break: break-word; }
   cursor: pointer;
 }
 .new-chat-btn:hover { background: #f6f7f9; border-color: #c6cdd5; }
+
+/* 工具调用日志：显示模型按了哪个按钮、传了什么、结果如何 */
+.tool-log {
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  background: #f6f8fa;
+  border: 1px dashed #d8dee4;
+  border-radius: 8px;
+  font-size: 12px;
+}
+.tool-line {
+  margin: 0;
+  padding: 2px 0;
+  color: #57606a;
+  font-family: Consolas, "Courier New", monospace;
+  word-break: break-all;
+  white-space: pre-wrap;
+}
+.tool-line.ok { color: #1a7f37; }
+.tool-line.bad { color: #b00; }
