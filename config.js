@@ -2,13 +2,13 @@
    config.js —— 只放「会变的东西」
 
    任务书要求：后端地址要抽成配置项，不许写死在业务代码里。
-   这样以后把后端部署到网上，只改这一个文件，别的代码一个字不用动。
+   换地址只改这一个文件，别的代码一个字不用动。
    ============================================================ */
 
 const CONFIG = {
-  // 现在后端跑在你自己电脑上，所以是 localhost:4000
-  API_BASE: "http://localhost:4000/api"
+  // 后端已部署到 Railway（代码在 github.com/Ink-saber/webone-server）
+  API_BASE: "https://webone-server-production.up.railway.app/api"
 
-  // 等后端部署到网上之后，把上面那一行注释掉，换成真地址，例如：
-  // API_BASE: "https://webone-server.onrender.com/api"
+  // 本地开发时改成下面这一行，然后先在本地把后端跑起来：
+  // API_BASE: "http://localhost:4000/api"
 };
