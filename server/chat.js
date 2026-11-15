@@ -117,10 +117,15 @@ function register(app, fail) {
       res.write("data: " + JSON.stringify(obj) + "\n\n");
     };
 
-    // 用户点「停止生成」时，浏览器会断开连接，我们把上游请求也中断
+    // 用户点「停止生成」时，浏览器会断开连接，我们把上游请求也中断。
+    //
+    // 这里必须监听 res 的 close，不能监听 req 的 close：
+    // Node 16 之后，req 在请求体读完后也会触发 close，
+    // 监听 req 会导致「正常请求刚进来就被判定成用户断开」，上游立刻被取消，
+    // 结果就是响应头回来了、内容却是空的。
     const controller = new AbortController();
-    req.on("close", function () {
-      controller.abort();
+    res.on("close", function () {
+      if (!res.writableEnded) controller.abort();
     });
 
     try {
