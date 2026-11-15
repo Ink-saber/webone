@@ -60,7 +60,13 @@ function initListPage() {
   function render() {
     const kw = keyword.trim().toLowerCase();
 
-    const shown = allItems.filter(function (it) {
+    // 未完成的排在前面，已完成的自动沉底；同类之间按创建顺序
+    const ordered = allItems.slice().sort(function (a, b) {
+      if (a.done !== b.done) return a.done ? 1 : -1;
+      return a.id - b.id;
+    });
+
+    const shown = ordered.filter(function (it) {
       if (onlyTodoOn && it.done) return false;
       const hay = (it.title + " " + (it.note || "")).toLowerCase();
       return hay.indexOf(kw) !== -1;
