@@ -125,6 +125,15 @@ function initListPage() {
     a.href = "detail.html?id=" + it.id;
     a.textContent = it.title;
 
+    // 标记完成 / 取消完成（调 PUT 接口）
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "done-btn";
+    toggle.textContent = it.done ? "取消完成" : "标记完成";
+    toggle.addEventListener("click", function () {
+      toggleDone(it, toggle);
+    });
+
     const del = document.createElement("button");
     del.type = "button";
     del.className = "del";
@@ -135,6 +144,7 @@ function initListPage() {
 
     li.appendChild(badge);
     li.appendChild(a);
+    li.appendChild(toggle);
     li.appendChild(del);
     return li;
   }
@@ -161,6 +171,33 @@ function initListPage() {
       window.alert("删除失败：" + err.message);
       btn.disabled = false;
       btn.textContent = "删除";
+    }
+  }
+
+
+  /* ---------- 标记完成 / 取消完成 ---------- */
+  async function toggleDone(it, btn) {
+    btn.disabled = true;
+    btn.textContent = "处理中";
+
+    try {
+      const res = await fetch(API + "/items/" + it.id, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ done: !it.done })
+      });
+
+      const json = await res.json().catch(function () { return {}; });
+
+      if (!res.ok || json.code !== 0) {
+        throw new Error(json.msg || ("服务器返回 " + res.status));
+      }
+
+      await loadItems();
+    } catch (err) {
+      window.alert("修改失败：" + err.message);
+      btn.disabled = false;
+      btn.textContent = it.done ? "取消完成" : "标记完成";
     }
   }
 

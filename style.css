@@ -175,3 +175,25 @@ h2 { font-size: 20px; margin: 0 0 8px; word-break: break-word; }
   .add-form { flex-direction: column; }
   #add-btn { width: 100%; }
 }
+
+/* 标记完成按钮 */
+.done-btn {
+  flex: none;
+  padding: 3px 10px;
+  font-size: 12px;
+  border: 1px solid #cfe0cf;
+  border-radius: 6px;
+  background: #f3faf3;
+  color: #1a7f37;
+  cursor: pointer;
+}
+.done-btn:hover { background: #e7f5e7; }
+.done-btn:disabled { color: #bbb; border-color: #eee; background: #fafafa; cursor: default; }
+
+/* 标题允许被压缩，避免两个按钮把它挤出去 */
+.item-title { min-width: 0; }
+
+/* 窄屏：一行放不下就让按钮换到第二行 */
+@media (max-width: 420px) {
+  .list li { flex-wrap: wrap; }
+}
