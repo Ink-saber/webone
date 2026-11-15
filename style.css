@@ -646,6 +646,46 @@ a.btn-link {
 
 .detail-actions { margin: 0 0 18px; }
 
+/* ============================================================
+   对话页：整页撑满视口，消息区内部滚动，输入框永远在底部可见
+   ============================================================ */
+
+body[data-page="chat"] {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* 聊天时不需要页脚，把空间留给对话 */
+body[data-page="chat"] .site-footer { display: none; }
+
+body[data-page="chat"] main {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  width: 100%;
+  padding-bottom: 20px;
+}
+
+body[data-page="chat"] .chat-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+body[data-page="chat"] .messages {
+  flex: 1;
+  height: auto;
+  min-height: 120px;
+  overflow-y: auto;
+}
+
+body[data-page="chat"] .chat-form {
+  flex: none;
+}
+
 /* ---------- 手机 ---------- */
 
 @media (max-width: 560px) {
