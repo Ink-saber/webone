@@ -77,7 +77,7 @@ function initListPage() {
 
     if (shown.length === 0) {
       el.empty.textContent = allItems.length === 0
-        ? "这里还是空的。上面输入一条试试，或者去「对话」跟" + CONFIG.AI_NAME + "说一声。"
+        ? "这里还是空的。上面输入一条试试，或者去「" + CONFIG.AI_NAME + "」说一声。"
         : "没有符合筛选条件的待办";
       setState("empty");
       return;
