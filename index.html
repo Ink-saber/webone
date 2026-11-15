@@ -3,34 +3,37 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>第四阶段待办清单</title>
+  <title>待办簿</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body data-page="list">
 
-  <header>
-    <h1>第四阶段待办清单</h1>
-    <p class="subtitle">26 级 · 李昊泽 · 一周做出 Web + AI 应用</p>
+  <header class="site-header">
+    <div class="brand">
+      <h1 data-site-name>待办簿</h1>
+      <p class="subtitle" data-tagline></p>
+    </div>
+    <div class="user-bar">
+      <span id="user-name" class="user-name"></span>
+      <button id="logout-btn" class="btn-text" type="button">退出</button>
+    </div>
   </header>
 
-  <nav>
-    <a href="index.html" class="active">列表</a>
+  <nav class="site-nav">
+    <a href="index.html" class="active">清单</a>
     <a href="chat.html">对话</a>
   </nav>
 
   <main>
-    <section>
+    <section class="panel">
 
-      <!-- 新增：回车或点按钮都能提交 -->
       <form id="add-form" class="add-form">
-        <input id="new-title" type="text" maxlength="100"
-               placeholder="新增一条待办，写完按回车" required>
-        <button id="add-btn" type="submit">新增</button>
+        <input id="new-title" type="text" maxlength="100" placeholder="写一件事，按回车添加" required>
+        <button id="add-btn" class="btn-primary" type="submit">添加</button>
       </form>
 
-      <!-- 工具栏：关键字筛选 + 只看未完成 -->
       <div class="toolbar">
-        <input id="search" type="search" placeholder="按关键字筛选">
+        <input id="search" type="search" placeholder="搜索标题或说明">
         <label class="check">
           <input id="only-todo" type="checkbox"> 只看未完成
         </label>
@@ -38,26 +41,24 @@
 
       <p id="count" class="count"></p>
 
-      <!-- 三种状态，同一时间只会显示一个 -->
       <p id="loading" class="state" hidden>加载中…</p>
-      <p id="empty" class="state" hidden>还没有待办</p>
+      <p id="empty" class="state" hidden>这里还是空的</p>
       <div id="error" class="state error" hidden>
         <p id="error-msg"></p>
-        <button id="retry" type="button">重试</button>
+        <button id="retry" class="btn-ghost" type="button">重试</button>
       </div>
 
-      <!-- 有数据时显示这个 -->
       <ul id="list" class="list" hidden></ul>
 
     </section>
   </main>
 
-  <footer>
-    <p>© 2026 李昊泽</p>
+  <footer class="site-footer">
+    <p><span data-site-name></span></p>
   </footer>
 
-  <!-- config.js 必须在 app.js 前面，因为 app.js 要用里面的 API_BASE -->
   <script src="config.js"></script>
+  <script src="branding.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

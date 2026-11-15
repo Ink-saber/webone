@@ -1,14 +1,21 @@
 /* ============================================================
-   config.js —— 只放「会变的东西」
+   config.js —— 所有「会变的」和「想改的」都放这里
 
-   任务书要求：后端地址要抽成配置项，不许写死在业务代码里。
-   换地址只改这一个文件，别的代码一个字不用动。
+   改名字、改口号、换后端地址，只改这个文件，别的代码不用动。
    ============================================================ */
 
 const CONFIG = {
-  // 后端已部署到 Railway（代码在 github.com/Ink-saber/webone-server）
-  API_BASE: "https://webone-server-production.up.railway.app/api"
+  /* ---------- 品牌 ---------- */
+  SITE_NAME: "待办簿",
+  TAGLINE: "把要做的事，一条一条记下来",
 
-  // 本地开发时改成下面这一行，然后先在本地把后端跑起来：
-  // API_BASE: "http://localhost:4000/api"
+  /* ---------- 助手 ---------- */
+  AI_NAME: "小记",
+  AI_TAGLINE: "有什么要记的，直接跟我说",
+
+  /* ---------- 后端地址 ----------
+     线上后端（Railway）
+     本地开发时换成下面这一行：
+     API_BASE: "http://localhost:4000/api" */
+  API_BASE: "https://webone-server-production.up.railway.app/api"
 };

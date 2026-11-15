@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>登录</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="login" class="page-login">
+
+  <main class="login-wrap">
+    <section class="login-card">
+
+      <h1 data-site-name>待办簿</h1>
+      <p class="subtitle" data-tagline></p>
+
+      <div class="login-tabs">
+        <button id="tab-login" class="login-tab active" type="button">登录</button>
+        <button id="tab-register" class="login-tab" type="button">注册</button>
+      </div>
+
+      <form id="login-form" class="login-form">
+        <label class="field">
+          <span>用户名</span>
+          <input id="username" type="text" maxlength="20" autocomplete="username" required>
+        </label>
+
+        <label class="field">
+          <span>密码</span>
+          <input id="password" type="password" maxlength="64" autocomplete="current-password" required>
+        </label>
+
+        <p id="login-error" class="login-error" hidden></p>
+
+        <button id="submit-btn" class="btn-primary" type="submit">登录</button>
+      </form>
+
+      <p class="login-hint">
+        第一次来？点上面的「注册」。用户名 2~20 位，密码至少 6 位。
+      </p>
+
+    </section>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="branding.js"></script>
+  <script src="login.js"></script>
+</body>
+</html>

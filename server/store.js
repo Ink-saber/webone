@@ -1,35 +1,31 @@
 /* ============================================================
-   store.js —— 存数据这一层（任务书允许的「本地 JSON 文件」方案）
+   store.js —— 数据层（多用户版）
 
-   为什么不用 SQLite：
-   SQLite 需要 Node 自带的 node:sqlite，而云平台（函数计算）的 Node 版本
-   可能低于 22.5，还会限制文件写入，一启动就退出。
-   换成纯 JS 的 JSON 文件，不依赖任何原生模块，任何 Node 都能跑。
+   数据结构（都在这一个 JSON 文件里）：
+   {
+     nextItemId, nextUserId,
+     users:    [{ id, username, salt, hash, createdAt }],
+     items:    [{ id, userId, title, note, done, createdAt }],
+     sessions: { token: { userId, createdAt } }
+   }
 
-   设计成三级保险：
-     1. 优先写到 DB_PATH 指定的文件（本地默认 server/data.json）
-     2. 写不进去（云上目录只读）→ 降级成内存模式，服务照常跑，只是不持久
-     3. 读到的文件坏了 → 丢掉重来，不让服务崩
+   三条保险：
+     1. 优先写文件；写不进去降级成内存，服务照常跑
+     2. 文件坏了不让服务崩
+     3. 旧版本没有 userId 的待办会被丢弃（新版本按用户隔离数据）
    ============================================================ */
 
 const fs = require("node:fs");
 const path = require("node:path");
+const crypto = require("node:crypto");
 
 const filePath = process.env.DB_PATH || path.join(__dirname, "data.json");
 
-let items = [];
-let nextId = 1;
-let persistent = false;
+// 登录凭证有效期 7 天
+const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
-const SEED = [
-  { title: "任务1：静态页面上线", note: "已经拿到 https 网址，抓包和 404 截图都做了。", done: true },
-  { title: "任务2：写 3 个接口，数据落盘", note: "查看列表 / 新增 / 删除三个通道，服务重启后数据还在。", done: false },
-  { title: "任务3：前后端联调，做出增删查闭环", note: "加载中、空数据、请求失败三种状态都要有。", done: false },
-  { title: "任务4：接入大模型，做流式对话页", note: "文字一个一个蹦出来，密钥只放在服务器上。", done: false },
-  { title: "任务5：工具调用，让模型操作数据", note: "一句自然语言，数据库真的多一条。", done: false },
-  { title: "任务6：整合交付与答辩", note: "README 能让别人 10 分钟跑起来。", done: false },
-  { title: "贯穿全程：每天一次提交 + 周记", note: "提交记录就是本周的真实进度。", done: false }
-];
+let db = { nextItemId: 1, nextUserId: 1, items: [], users: [], sessions: {} };
+let persistent = false;
 
 function now() {
   const d = new Date();
@@ -37,21 +33,10 @@ function now() {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }
 
-function seed() {
-  items = SEED.map((it, i) => ({
-    id: i + 1,
-    title: it.title,
-    note: it.note,
-    done: it.done,
-    createdAt: now()
-  }));
-  nextId = items.length + 1;
-}
-
 function save() {
   if (!persistent) return;
   try {
-    fs.writeFileSync(filePath, JSON.stringify({ nextId, items }, null, 2), "utf8");
+    fs.writeFileSync(filePath, JSON.stringify(db, null, 2), "utf8");
   } catch (e) {
     console.warn("[store] 写入失败，转为内存模式：" + e.message);
     persistent = false;
@@ -63,71 +48,153 @@ function init() {
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
 
     if (fs.existsSync(filePath)) {
-      const raw = fs.readFileSync(filePath, "utf8");
-      const data = JSON.parse(raw);
-      if (Array.isArray(data.items)) {
-        items = data.items;
-        nextId = Number(data.nextId) || items.length + 1;
-      }
+      const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
+      if (data && typeof data === "object") db = data;
     }
     persistent = true;
     console.log("[store] 数据文件：" + filePath);
   } catch (e) {
-    console.warn("[store] 无法访问数据文件，使用内存模式（重启后数据重置）：" + e.message);
+    console.warn("[store] 无法访问数据文件，使用内存模式：" + e.message);
     persistent = false;
   }
 
-  if (!Array.isArray(items) || items.length === 0) {
-    seed();
-    save();
-    console.log("[store] 已写入 " + items.length + " 条初始数据");
-  } else {
-    console.log("[store] 已载入 " + items.length + " 条数据");
+  if (!Array.isArray(db.users)) db.users = [];
+  if (!Array.isArray(db.items)) db.items = [];
+  if (!db.sessions || typeof db.sessions !== "object") db.sessions = {};
+  if (!Number.isInteger(db.nextUserId) || db.nextUserId < 1) db.nextUserId = db.users.length + 1;
+  if (!Number.isInteger(db.nextItemId) || db.nextItemId < 1) db.nextItemId = db.items.length + 1;
+
+  // 旧版本的数据没有归属用户，直接丢弃（新版本按用户隔离）
+  const before = db.items.length;
+  db.items = db.items.filter(function (it) {
+    return it && Number.isInteger(it.userId);
+  });
+  if (before !== db.items.length) {
+    console.log("[store] 已清理 " + (before - db.items.length) + " 条无归属的旧待办");
   }
+
+  save();
+  console.log("[store] 用户 " + db.users.length + " 个，待办 " + db.items.length + " 条");
 }
 
 init();
 
-/* ---------------- 对外提供的操作 ---------------- */
+/* ============================================================
+   用户
+   ============================================================ */
 
-function list(opts) {
+function createUser(username, salt, hash) {
+  const user = {
+    id: db.nextUserId++,
+    username: username,
+    salt: salt,
+    hash: hash,
+    createdAt: now()
+  };
+  db.users.push(user);
+  save();
+  return user;
+}
+
+function findUserByName(username) {
+  const lower = String(username).toLowerCase();
+  return db.users.find(function (u) { return u.username.toLowerCase() === lower; }) || null;
+}
+
+function getUserById(id) {
+  return db.users.find(function (u) { return u.id === id; }) || null;
+}
+
+/* ============================================================
+   会话（登录凭证）
+   token 是随机串，客户端存在浏览器里，每次请求带上
+   ============================================================ */
+
+function createSession(userId) {
+  const token = crypto.randomBytes(24).toString("hex");
+  db.sessions[token] = { userId: userId, createdAt: Date.now() };
+  save();
+  return token;
+}
+
+function getSession(token) {
+  if (!token) return null;
+  const s = db.sessions[token];
+  if (!s) return null;
+
+  if (Date.now() - s.createdAt > SESSION_TTL_MS) {
+    delete db.sessions[token];
+    save();
+    return null;
+  }
+  return s;
+}
+
+function deleteSession(token) {
+  if (token && db.sessions[token]) {
+    delete db.sessions[token];
+    save();
+  }
+}
+
+// 清理过期会话，避免 sessions 无限增长
+function cleanExpiredSessions() {
+  const deadline = Date.now() - SESSION_TTL_MS;
+  let removed = 0;
+  for (const token of Object.keys(db.sessions)) {
+    if (db.sessions[token].createdAt < deadline) {
+      delete db.sessions[token];
+      removed++;
+    }
+  }
+  if (removed) save();
+}
+
+/* ============================================================
+   待办（全部按用户隔离）
+   ============================================================ */
+
+function list(userId, opts) {
   const done = opts && opts.done;
   const q = opts && opts.q ? String(opts.q).toLowerCase() : "";
 
-  return items
-    .filter((it) => {
+  return db.items
+    .filter(function (it) {
+      if (it.userId !== userId) return false;
       if (done === true && !it.done) return false;
       if (done === false && it.done) return false;
       if (q) {
-        // 标题和说明都要搜：用户经常记得的是说明里的内容，不是标题
         const hay = (String(it.title) + " " + String(it.note || "")).toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
     })
     .slice()
-    .sort((a, b) => a.id - b.id);
+    .sort(function (a, b) { return a.id - b.id; });
 }
 
-function get(id) {
-  return items.find((it) => it.id === id) || null;
+function get(userId, id) {
+  return db.items.find(function (it) {
+    return it.id === id && it.userId === userId;
+  }) || null;
 }
 
-function create(input) {
+function create(userId, input) {
   const item = {
-    id: nextId++,
+    id: db.nextItemId++,
+    userId: userId,
     title: input.title,
     note: input.note || "",
     done: input.done === true,
     createdAt: now()
   };
-  items.push(item);
+  db.items.push(item);
   save();
   return item;
 }
 
-function update(id, patch) {
-  const item = get(id);
+function update(userId, id, patch) {
+  const item = get(userId, id);
   if (!item) return null;
 
   if (patch.title !== undefined) item.title = patch.title;
@@ -138,12 +205,28 @@ function update(id, patch) {
   return item;
 }
 
-function remove(id) {
-  const idx = items.findIndex((it) => it.id === id);
+function remove(userId, id) {
+  const idx = db.items.findIndex(function (it) {
+    return it.id === id && it.userId === userId;
+  });
   if (idx === -1) return false;
-  items.splice(idx, 1);
+  db.items.splice(idx, 1);
   save();
   return true;
 }
 
-module.exports = { list, get, create, update, remove, filePath };
+module.exports = {
+  createUser,
+  findUserByName,
+  getUserById,
+  createSession,
+  getSession,
+  deleteSession,
+  cleanExpiredSessions,
+  list,
+  get,
+  create,
+  update,
+  remove,
+  filePath
+};

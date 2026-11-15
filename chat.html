@@ -3,51 +3,58 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>对话 · 第四阶段待办清单</title>
+  <title>对话</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body data-page="chat">
 
-  <header>
-    <h1>对话</h1>
-    <p class="subtitle">跟模型聊聊你的待办和开发任务</p>
+  <header class="site-header">
+    <div class="brand">
+      <h1 data-ai-name>小记</h1>
+      <p class="subtitle" data-ai-tagline></p>
+    </div>
+    <div class="user-bar">
+      <span id="user-name" class="user-name"></span>
+      <button id="logout-btn" class="btn-text" type="button">退出</button>
+    </div>
   </header>
 
-  <nav>
-    <a href="index.html">列表</a>
+  <nav class="site-nav">
+    <a href="index.html">清单</a>
     <a href="chat.html" class="active">对话</a>
   </nav>
 
   <main>
-    <section class="chat-panel">
+    <section class="panel chat-panel">
 
       <div class="chat-toolbar">
         <span id="turn-count" class="turn-count"></span>
-        <button id="new-chat-btn" type="button" class="new-chat-btn">新对话</button>
+        <button id="new-chat-btn" class="btn-text" type="button">新对话</button>
       </div>
 
       <div id="messages" class="messages">
-        <p class="state" id="chat-hint">还没有对话。可以试试问：「我今天该先做哪个任务？」</p>
+        <p class="state" id="chat-hint"></p>
       </div>
 
       <form id="chat-form" class="chat-form">
         <textarea id="chat-input" rows="2" maxlength="1000"
-                  placeholder="输入问题，Enter 发送，Shift + Enter 换行"></textarea>
+                  placeholder="Enter 发送，Shift + Enter 换行"></textarea>
         <div class="chat-actions">
           <span id="chat-status" class="chat-status"></span>
-          <button id="stop-btn" type="button" class="stop-btn" hidden>停止生成</button>
-          <button id="send-btn" type="submit" class="send-btn">发送</button>
+          <button id="stop-btn" class="btn-ghost" type="button" hidden>停止生成</button>
+          <button id="send-btn" class="btn-primary" type="submit">发送</button>
         </div>
       </form>
 
     </section>
   </main>
 
-  <footer>
-    <p>© 2026 李昊泽</p>
+  <footer class="site-footer">
+    <p><span data-site-name></span></p>
   </footer>
 
   <script src="config.js"></script>
+  <script src="branding.js"></script>
   <script src="chat.js"></script>
 </body>
 </html>

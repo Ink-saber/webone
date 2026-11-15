@@ -1,35 +1,32 @@
 /* ============================================================
-   index.js —— 接口服务本体
-   一共六个接口 + 一个自检页，全部返回 { code, data, msg }
-   其中 /api/chat 是流式的（SSE），不走统一 JSON 格式
+   index.js —— 接口服务本体（多用户版）
 
-   启动顺序：先读 .env（拿 API Key），再起服务
+   公开接口：/api/auth/register、/api/auth/login、/api/auth/logout、/
+   需要登录：/api/items*、/api/chat、/api/auth/me
+
+   鉴权方式：请求头 Authorization: Bearer <token>
    ============================================================ */
 
-require("./env");               // 必须先执行，把 .env 读进 process.env
+require("./env");               // 先读 .env，拿到 DEEPSEEK_API_KEY
 
 const express = require("express");
 const store = require("./store");
+const auth = require("./auth");
 const chat = require("./chat");
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-/* ============================================================
-   跨域（CORS）
-   网页在 3000，接口在 4000，端口不同就算不同源，浏览器默认不放行。
-   必须由服务端明确返回「允许」的响应头。
-   ============================================================ */
+/* ---------- 跨域 ---------- */
 app.use(function (req, res, next) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
   if (req.method === "OPTIONS") {
     res.status(204).end();
     return;
   }
-
   next();
 });
 
@@ -45,30 +42,35 @@ function fail(res, status, code, msg) {
 }
 
 /* ============================================================
-   接口 1：GET /api/items —— 查列表
+   注册 / 登录 / 退出 / 当前用户
    ============================================================ */
-app.get("/api/items", function (req, res) {
+auth.register(app, fail);
+
+/* ============================================================
+   待办：全部要登录，且只看得到自己的数据
+   ============================================================ */
+
+// 查列表
+app.get("/api/items", auth.requireAuth, function (req, res) {
   const opts = {};
 
   if (req.query.done === "true") opts.done = true;
   if (req.query.done === "false") opts.done = false;
   if (req.query.q) opts.q = req.query.q;
 
-  const rows = store.list(opts);
+  const rows = store.list(req.userId, opts);
   ok(res, rows, "共 " + rows.length + " 条");
 });
 
-/* ============================================================
-   接口 2：GET /api/items/:id —— 查某一条
-   ============================================================ */
-app.get("/api/items/:id", function (req, res) {
+// 查某一条
+app.get("/api/items/:id", auth.requireAuth, function (req, res) {
   const id = Number(req.params.id);
 
   if (!Number.isInteger(id) || id <= 0) {
     return fail(res, 400, 4001, "id 必须是正整数");
   }
 
-  const item = store.get(id);
+  const item = store.get(req.userId, id);
   if (!item) {
     return fail(res, 404, 4004, "没有编号为 " + id + " 的待办");
   }
@@ -76,10 +78,8 @@ app.get("/api/items/:id", function (req, res) {
   ok(res, item);
 });
 
-/* ============================================================
-   接口 3：POST /api/items —— 新增一条
-   ============================================================ */
-app.post("/api/items", function (req, res) {
+// 新增
+app.post("/api/items", auth.requireAuth, function (req, res) {
   const body = req.body || {};
 
   const title = typeof body.title === "string" ? body.title.trim() : "";
@@ -103,21 +103,19 @@ app.post("/api/items", function (req, res) {
     done = body.done;
   }
 
-  const item = store.create({ title: title, note: note, done: done });
+  const item = store.create(req.userId, { title: title, note: note, done: done });
   ok(res, item, "新增成功", 201);
 });
 
-/* ============================================================
-   接口 4：DELETE /api/items/:id —— 删除一条
-   ============================================================ */
-app.delete("/api/items/:id", function (req, res) {
+// 删除
+app.delete("/api/items/:id", auth.requireAuth, function (req, res) {
   const id = Number(req.params.id);
 
   if (!Number.isInteger(id) || id <= 0) {
     return fail(res, 400, 4001, "id 必须是正整数");
   }
 
-  const removed = store.remove(id);
+  const removed = store.remove(req.userId, id);
   if (!removed) {
     return fail(res, 404, 4004, "没有编号为 " + id + " 的待办");
   }
@@ -125,17 +123,15 @@ app.delete("/api/items/:id", function (req, res) {
   ok(res, null, "删除成功");
 });
 
-/* ============================================================
-   接口 5：PUT /api/items/:id —— 修改一条
-   ============================================================ */
-app.put("/api/items/:id", function (req, res) {
+// 修改
+app.put("/api/items/:id", auth.requireAuth, function (req, res) {
   const id = Number(req.params.id);
 
   if (!Number.isInteger(id) || id <= 0) {
     return fail(res, 400, 4001, "id 必须是正整数");
   }
 
-  const row = store.get(id);
+  const row = store.get(req.userId, id);
   if (!row) {
     return fail(res, 404, 4004, "没有编号为 " + id + " 的待办");
   }
@@ -152,7 +148,7 @@ app.put("/api/items/:id", function (req, res) {
 
   if (body.note !== undefined) {
     const note = typeof body.note === "string" ? body.note.trim() : "";
-    if (note.length > 500) return fail(res, 400, 4001, "note 最多 500 个字符");
+    if (note.length > 500) return fail(res, 400, 4001, "note 最多 500 个字");
     patch.note = note;
   }
 
@@ -163,54 +159,48 @@ app.put("/api/items/:id", function (req, res) {
     patch.done = body.done;
   }
 
-  const updated = store.update(id, patch);
+  const updated = store.update(req.userId, id, patch);
   ok(res, updated, "修改成功");
 });
 
 /* ============================================================
-   接口 6：POST /api/chat —— 跟大模型对话（流式，SSE）
-   实现在 chat.js 里
+   对话 + 工具调用（要登录，工具只动自己的数据）
    ============================================================ */
-chat.register(app, fail);
+chat.register(app, fail, auth.requireAuth);
 
 /* ============================================================
-   自检页
+   自检
    ============================================================ */
 app.get("/", function (req, res) {
   ok(
     res,
     {
-      service: "webone 待办清单接口",
-      task: "任务4",
+      service: "todo-list api",
+      version: "v2",
       hasApiKey: Boolean(process.env.DEEPSEEK_API_KEY)
     },
     "服务正在运行"
   );
 });
 
-/* ============================================================
-   兜底 1：不存在的路径
-   ============================================================ */
+/* ---------- 兜底 ---------- */
 app.use(function (req, res) {
   fail(res, 404, 4004, "没有这个接口：" + req.method + " " + req.path);
 });
 
-/* ============================================================
-   兜底 2：全局错误处理
-   ============================================================ */
 app.use(function (err, req, res, next) {
   if (err.type === "entity.parse.failed") {
     return fail(res, 400, 4001, "请求体不是合法的 JSON");
   }
-
   console.error("[服务器错误]", err);
   fail(res, 500, 5000, "服务器内部错误，详情看服务端日志");
 });
 
-/* ============================================================
-   启动
-   ============================================================ */
+/* ---------- 启动 ---------- */
 app.listen(PORT, "0.0.0.0", function () {
+  store.cleanExpiredSessions();
+  setInterval(store.cleanExpiredSessions, 60 * 60 * 1000).unref();
+
   console.log("");
   console.log("  接口服务已启动");
   console.log("  端口：" + PORT);

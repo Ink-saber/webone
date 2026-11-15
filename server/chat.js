@@ -108,7 +108,7 @@ const TOOLS = [
    执行工具：模型只负责「决定」，真正干活的是这里
    返回给模型的内容必须是它看得懂的文字（JSON 字符串）
    ============================================================ */
-function runTool(name, args) {
+function runTool(name, args, userId) {
   if (name === "add_item") {
     const title = typeof args.title === "string" ? args.title.trim() : "";
     if (!title) {
@@ -118,7 +118,7 @@ function runTool(name, args) {
       return { ok: false, error: "title 超过 100 个字，请精简后再调用" };
     }
 
-    const item = store.create({
+    const item = store.create(userId, {
       title: title,
       note: typeof args.note === "string" ? args.note : "",
       done: false
@@ -138,7 +138,7 @@ function runTool(name, args) {
       opts.q = args.keyword.trim();
     }
 
-    const rows = store.list(opts);
+    const rows = store.list(userId, opts);
 
     return {
       ok: true,
@@ -294,8 +294,8 @@ async function callModel(messages, tools, onText, signal) {
 /* ============================================================
    注册路由
    ============================================================ */
-function register(app, fail) {
-  app.post("/api/chat", async function (req, res) {
+function register(app, fail, requireAuth) {
+  app.post("/api/chat", requireAuth, async function (req, res) {
     if (!process.env.DEEPSEEK_API_KEY) {
       return fail(
         res, 500, 5001,
@@ -386,7 +386,7 @@ function register(app, fail) {
           if (args === null) {
             outcome = { ok: false, error: "参数不是合法 JSON，请重新按 schema 生成" };
           } else {
-            outcome = runTool(name, args);
+            outcome = runTool(name, args, req.userId);
           }
 
           send({
