@@ -56,6 +56,40 @@
 - 全局错误处理：异常都返回 JSON，不把 HTML 报错栈甩给前端
 - 已开启跨域（CORS）
 
+## 功能截图
+
+> 把截图放进 `screenshots/` 目录，文件名按下面来，README 会自动显示。
+
+| 列表页 | 详情页 |
+| --- | --- |
+| ![列表页](screenshots/list.png) | ![详情页](screenshots/detail.png) |
+
+| 对话页（流式输出） | 工具调用 |
+| --- | --- |
+| ![对话页](screenshots/chat.png) | ![工具调用](screenshots/tool.png) |
+
+## 技术栈
+
+| 层 | 用了什么 | 为什么这么选 |
+| --- | --- | --- |
+| 前端 | 原生 HTML / CSS / JavaScript | 一周时间不引入框架，先把链路跑通 |
+| 后端 | Node.js + Express 5 | 和前端同一门语言，少一次切换 |
+| 存储 | JSON 文件（`server/store.js`） | 不依赖 `node:sqlite` 等原生模块，任何 Node 版本和云平台都能跑；目录不可写时自动降级为内存模式 |
+| 大模型 | DeepSeek（OpenAI 兼容接口） | 国内可直连，有免费额度 |
+| 前端部署 | GitHub Pages | 静态托管，push 即上线 |
+| 后端部署 | Railway | 支持 Node 服务，免费额度 |
+| 版本管理 | Git + GitHub | 每完成一个任务提交一次 |
+
+## 环境变量
+
+| 变量 | 必填 | 说明 |
+| --- | --- | --- |
+| `DEEPSEEK_API_KEY` | 对话功能必填 | DeepSeek 开放平台的 Key。本地写在 `server/.env`；线上填在 Railway 的 Variables 里 |
+| `PORT` | 否 | 监听端口。本地默认 4000，云平台会自动注入 |
+| `DB_PATH` | 否 | 数据文件路径。默认 `server/data.json`，云平台可指向 `/tmp/data.json` |
+
+`server/.env.example` 是模板，复制成 `server/.env` 后填入真实值。`.env` 已被 `.gitignore` 排除，不会进代码库。
+
 ## 本地怎么跑
 
 **必须开两个终端。**
