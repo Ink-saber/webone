@@ -98,7 +98,11 @@ function list(opts) {
     .filter((it) => {
       if (done === true && !it.done) return false;
       if (done === false && it.done) return false;
-      if (q && !String(it.title).toLowerCase().includes(q)) return false;
+      if (q) {
+        // 标题和说明都要搜：用户经常记得的是说明里的内容，不是标题
+        const hay = (String(it.title) + " " + String(it.note || "")).toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
       return true;
     })
     .slice()
