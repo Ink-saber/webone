@@ -595,6 +595,25 @@ a.btn-link {
   border-radius: 8px;
 }
 
+/* 已完成分组的折叠头（选择器要比 .list li 更具体才压得住） */
+.list li.group-head {
+  display: block;
+  padding: 16px 0 8px;
+  border-bottom: none;
+}
+
+.list li.group-head button {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: 12px;
+  color: var(--text-soft);
+  cursor: pointer;
+}
+
+.list li.group-head button:hover { color: var(--text); }
+
 /* ---------- 新建 / 编辑表单 ---------- */
 
 .stack-form .field { margin-bottom: 16px; }

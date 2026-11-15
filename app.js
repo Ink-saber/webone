@@ -27,6 +27,7 @@ function initListPage() {
   let allItems = [];
   let keyword = "";
   let onlyTodoOn = false;
+  let showDone = false;   // 「已完成」区域是否展开，默认收起
 
   function setState(state) {
     el.loading.hidden = state !== "loading";
@@ -72,13 +73,41 @@ function initListPage() {
       return hay.indexOf(kw) !== -1;
     });
 
+    const undone = shown.filter(function (it) { return !it.done; });
+    const finished = shown.filter(function (it) { return it.done; });
+
     el.list.innerHTML = "";
-    shown.forEach(function (it) {
+
+    undone.forEach(function (it) {
       el.list.appendChild(createRow(it));
     });
 
+    // 已完成的收进一个可折叠的分组，默认不展开
+    if (finished.length > 0) {
+      const head = document.createElement("li");
+      head.className = "group-head";
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = (showDone ? "▾ " : "▸ ") + "已完成 " + finished.length + " 条";
+      btn.addEventListener("click", function () {
+        showDone = !showDone;
+        render();
+      });
+
+      head.appendChild(btn);
+      el.list.appendChild(head);
+
+      if (showDone) {
+        finished.forEach(function (it) {
+          el.list.appendChild(createRow(it));
+        });
+      }
+    }
+
+    const undoneCount = allItems.filter(function (it) { return !it.done; }).length;
     el.count.textContent = allItems.length > 0
-      ? "共 " + allItems.length + " 条，显示 " + shown.length + " 条"
+      ? "共 " + allItems.length + " 条 · 未完成 " + undoneCount + " 条"
       : "";
 
     if (shown.length === 0) {
