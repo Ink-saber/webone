@@ -568,6 +568,33 @@ h2 {
   text-align: center;
 }
 
+/* ---------- 面板顶部 ---------- */
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #f1f3f6;
+}
+
+.panel-hint {
+  font-size: 12px;
+  color: var(--text-soft);
+}
+
+a.btn-link {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  padding: 9px 16px;
+  font-size: 13px;
+  border-radius: 8px;
+}
+
 /* ---------- 新建 / 编辑表单 ---------- */
 
 .stack-form .field { margin-bottom: 16px; }
@@ -626,8 +653,11 @@ h2 {
   .brand h1 { font-size: 22px; }
   main { padding: 16px 16px 40px; }
   .panel { padding: 16px; }
+  .panel-hint { display: none; }
+  .panel-head { justify-content: flex-end; }
+  .panel-head .btn-link { width: 100%; justify-content: center; }
   .add-form { flex-direction: column; }
-  .add-form .btn-primary { width: 100%; }
+  .add-form .btn-ghost { width: 100%; }
   .messages { height: 60vh; }
   .bubble { max-width: 92%; }
   .list li { flex-wrap: wrap; }
