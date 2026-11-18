@@ -54,6 +54,7 @@
           <span>说明（可选）</span>
           <textarea id="note" rows="4" maxlength="500"
                     placeholder="补充背景、截止时间、具体步骤、相关链接……"></textarea>
+          <em class="field-hint char-count" id="note-count">0 / 500</em>
         </label>
 
         <label class="check">
@@ -64,6 +65,7 @@
 
         <div class="form-actions">
           <a class="btn-ghost" href="index.html">取消</a>
+          <button id="save-more" class="btn-ghost" type="button">保存并再加一条</button>
           <button id="submit-btn" class="btn-primary" type="submit">创建</button>
         </div>
 

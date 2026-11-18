@@ -4,20 +4,23 @@
    两种类型，必填项不一样：
      长期：标题必填，截止日期可选
      短期：标题必填，日期 + 时刻必填
+
+   底部有两个按钮：「创建」回清单，「保存并再加一条」留在本页继续。
    ============================================================ */
 
 const form = document.getElementById("new-form");
 const kindSeg = document.getElementById("kind-seg");
 const kindHint = document.getElementById("kind-hint");
 const titleEl = document.getElementById("title");
-const dueField = document.getElementById("due-field");
 const dueLabel = document.getElementById("due-label");
 const dueInput = document.getElementById("due");
 const dueHint = document.getElementById("due-hint");
 const noteEl = document.getElementById("note");
+const noteCount = document.getElementById("note-count");
 const doneEl = document.getElementById("done");
 const errorEl = document.getElementById("form-error");
 const submitBtn = document.getElementById("submit-btn");
+const saveMoreBtn = document.getElementById("save-more");
 
 let kind = "long";
 
@@ -40,7 +43,6 @@ function paintKind() {
     ? "有明确时刻要做的事，比如「周五 14:30 开会」"
     : "没有固定时刻，可以慢慢做，也可以设个截止日期";
 
-  // 换类型时清掉旧值，避免「日期」和「日期+时刻」格式打架
   dueInput.value = "";
 }
 
@@ -51,30 +53,30 @@ kindSeg.addEventListener("click", function (e) {
   paintKind();
 });
 
+/* ---------- 字数提示 ---------- */
+
+function paintNoteCount() {
+  noteCount.textContent = noteEl.value.length + " / 500";
+}
+noteEl.addEventListener("input", paintNoteCount);
+
 /* ---------- 从日历或快速添加带过来的预填 ---------- */
 
 const q = new URLSearchParams(location.search);
 
 if (q.get("kind") === "short") kind = "short";
 paintKind();
+paintNoteCount();
 
-if (q.get("title")) {
-  titleEl.value = q.get("title");
-}
+if (q.get("title")) titleEl.value = q.get("title");
 
 if (q.get("date")) {
-  if (kind === "short") {
-    dueInput.value = q.get("date") + "T09:00";
-  } else {
-    dueInput.value = q.get("date");
-  }
+  dueInput.value = kind === "short" ? q.get("date") + "T09:00" : q.get("date");
 }
 
-/* ---------- 提交 ---------- */
+/* ---------- 创建 ---------- */
 
-form.addEventListener("submit", async function (e) {
-  e.preventDefault();
-
+async function create(keepGoing) {
   errorEl.hidden = true;
 
   const title = titleEl.value.trim();
@@ -87,7 +89,6 @@ form.addEventListener("submit", async function (e) {
     return;
   }
 
-  // datetime-local 给的是 2026-11-20T14:30，后端要 2026-11-20 14:30
   const due = dueInput.value
     ? (isShort ? dueInput.value.replace("T", " ") : dueInput.value)
     : "";
@@ -100,6 +101,8 @@ form.addEventListener("submit", async function (e) {
   }
 
   submitBtn.disabled = true;
+  saveMoreBtn.disabled = true;
+  const originalText = submitBtn.textContent;
   submitBtn.textContent = "创建中…";
 
   try {
@@ -120,13 +123,35 @@ form.addEventListener("submit", async function (e) {
       throw new Error(json.msg || ("服务器返回 " + res.status));
     }
 
-    location.replace("index.html");
+    if (keepGoing) {
+      // 留在本页，清空内容继续写
+      titleEl.value = "";
+      noteEl.value = "";
+      doneEl.checked = false;
+      dueInput.value = "";
+      paintNoteCount();
+      titleEl.focus();
+      submitBtn.textContent = originalText;
+    } else {
+      location.replace("index.html");
+    }
   } catch (err) {
     errorEl.textContent = "创建失败：" + err.message;
     errorEl.hidden = false;
+    submitBtn.textContent = originalText;
+  } finally {
     submitBtn.disabled = false;
-    submitBtn.textContent = "创建";
+    saveMoreBtn.disabled = false;
   }
+}
+
+form.addEventListener("submit", function (e) {
+  e.preventDefault();
+  create(false);
+});
+
+saveMoreBtn.addEventListener("click", function () {
+  create(true);
 });
 
 titleEl.focus();

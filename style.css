@@ -1011,3 +1011,128 @@ body[data-page="chat"] .chat-form {
   .day-time { width: 44px; }
   .item-actions { margin-top: 6px; }
 }
+
+/* ============================================================
+   增删查改：新元素的样式（只给必要样式，视觉你随意）
+   ============================================================ */
+
+/* 快速添加里的时间框 */
+.quick-due {
+  flex: none;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text-soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfd;
+  outline: none;
+}
+.quick-due:focus { border-color: var(--primary); background: #fff; }
+.quick-due:not(:placeholder-shown) { color: var(--text); }
+
+.quick-extra {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: -4px 0 8px;
+  flex-wrap: wrap;
+}
+
+.quick-hint {
+  font-size: 12px;
+  color: var(--text-soft);
+}
+
+.quick-note {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.6;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfd;
+  outline: none;
+  resize: vertical;
+}
+.quick-note:focus { border-color: var(--primary); background: #fff; }
+
+/* 排序下拉 */
+.sort-select {
+  padding: 7px 8px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text-soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  outline: none;
+}
+
+/* 搜索命中高亮 */
+mark {
+  background: #fff3b0;
+  color: inherit;
+  padding: 0 1px;
+  border-radius: 2px;
+}
+
+/* 双击原地改标题 */
+.inline-edit {
+  flex: 1;
+  min-width: 0;
+  padding: 3px 8px;
+  font: inherit;
+  font-size: 14px;
+  border: 1px solid var(--primary);
+  border-radius: 6px;
+  outline: none;
+}
+
+/* 底部撤销提示条 */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  max-width: min(92vw, 480px);
+  padding: 12px 16px;
+  background: #1b1f24;
+  color: #fff;
+  font-size: 13px;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.24);
+  z-index: 50;
+}
+
+.toast span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toast-undo {
+  flex: none;
+  padding: 4px 12px;
+  font: inherit;
+  font-size: 13px;
+  color: #1b1f24;
+  background: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* 说明字数提示 */
+.char-count {
+  text-align: right;
+  margin-top: 4px;
+}

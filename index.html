@@ -30,12 +30,16 @@
 
       <div class="panel-head">
         <div class="tabs" id="kind-tabs">
-          <button type="button" data-kind="long" class="active">
-            <span class="tab-label">长期任务</span>
+          <button type="button" data-kind="all" class="active">
+            <span class="tab-label">全部</span>
+            <span class="tab-num">0</span>
+          </button>
+          <button type="button" data-kind="long">
+            <span class="tab-label">长期</span>
             <span class="tab-num">0</span>
           </button>
           <button type="button" data-kind="short">
-            <span class="tab-label">短期任务</span>
+            <span class="tab-label">短期</span>
             <span class="tab-num">0</span>
           </button>
         </div>
@@ -43,15 +47,28 @@
       </div>
 
       <form id="add-form" class="add-form">
-        <input id="new-title" type="text" maxlength="100" placeholder="写一件长期要做的事，按回车添加" required>
+        <input id="new-title" type="text" maxlength="100" placeholder="写一件事，按回车添加" required>
+        <input id="new-due" class="quick-due" type="datetime-local" title="填了时间就建成短期任务">
         <button id="add-btn" class="btn-ghost" type="submit">快速添加</button>
       </form>
 
+      <div class="quick-extra">
+        <button id="toggle-note" class="btn-text" type="button">＋ 说明</button>
+        <span id="quick-hint" class="quick-hint">不填时间 = 长期任务；填了时间 = 短期任务</span>
+      </div>
+      <textarea id="new-note" class="quick-note" rows="2" maxlength="500"
+                placeholder="补充说明（可选）" hidden></textarea>
+
       <div class="toolbar">
-        <input id="search" type="search" placeholder="搜索标题或说明">
+        <input id="search" type="search" placeholder="搜索标题或说明（会跨类型搜）">
         <label class="check">
           <input id="only-todo" type="checkbox"> 只看未完成
         </label>
+        <select id="sort-by" class="sort-select" title="排序方式">
+          <option value="due">按时间</option>
+          <option value="created">按创建</option>
+          <option value="title">按标题</option>
+        </select>
       </div>
 
       <p id="count" class="count"></p>
@@ -71,6 +88,11 @@
   <footer class="site-footer">
     <p><span data-site-name></span></p>
   </footer>
+
+  <div id="toast" class="toast" hidden>
+    <span id="toast-text"></span>
+    <button id="toast-undo" class="toast-undo" type="button">撤销</button>
+  </div>
 
   <script src="config.js"></script>
   <script src="branding.js"></script>

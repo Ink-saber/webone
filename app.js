@@ -1,7 +1,11 @@
 /* ============================================================
    app.js —— 清单页 与 详情页
 
-   日历在单独的 calendar.html / calendar.js 里。
+   增删查改的几处手感优化：
+     增：快速添加支持「填了时间就是短期任务」、可展开说明、加完保持焦点
+     删：不弹确认框，直接删 + 底部「撤销」（后端是软删除）
+     查：搜索跨类型、命中高亮、三种排序、全部/长期/短期三个 tab
+     改：双击标题原地改、标记完成不整页刷新
    ============================================================ */
 
 function pad2(n) {
@@ -18,6 +22,33 @@ function shortDue(due) {
   return due.slice(5);
 }
 
+// 把标题按关键字切段，命中的部分包 <mark>
+function appendHighlighted(parent, text, kw) {
+  if (!kw) {
+    parent.textContent = text;
+    return;
+  }
+
+  const lowerText = String(text).toLowerCase();
+  const lowerKw = kw.toLowerCase();
+
+  let from = 0;
+  while (true) {
+    const at = lowerText.indexOf(lowerKw, from);
+    if (at === -1) {
+      parent.appendChild(document.createTextNode(String(text).slice(from)));
+      break;
+    }
+    if (at > from) {
+      parent.appendChild(document.createTextNode(String(text).slice(from, at)));
+    }
+    const mark = document.createElement("mark");
+    mark.textContent = String(text).slice(at, at + kw.length);
+    parent.appendChild(mark);
+    from = at + kw.length;
+  }
+}
+
 /* ============================================================
    一、清单页
    ============================================================ */
@@ -26,9 +57,13 @@ function initListPage() {
   const el = {
     form: document.getElementById("add-form"),
     newTitle: document.getElementById("new-title"),
+    newDue: document.getElementById("new-due"),
+    newNote: document.getElementById("new-note"),
+    toggleNote: document.getElementById("toggle-note"),
     addBtn: document.getElementById("add-btn"),
     tabs: document.getElementById("kind-tabs"),
     search: document.getElementById("search"),
+    sortBy: document.getElementById("sort-by"),
     onlyTodo: document.getElementById("only-todo"),
     count: document.getElementById("count"),
     list: document.getElementById("list"),
@@ -36,15 +71,24 @@ function initListPage() {
     empty: document.getElementById("empty"),
     errorBox: document.getElementById("error"),
     errorMsg: document.getElementById("error-msg"),
-    retry: document.getElementById("retry")
+    retry: document.getElementById("retry"),
+    toast: document.getElementById("toast"),
+    toastText: document.getElementById("toast-text"),
+    toastUndo: document.getElementById("toast-undo")
   };
 
   let allItems = [];
-  let kind = "long";              // 当前 tab
+  let kind = "all";
+  let sortBy = "due";
   let keyword = "";
   let onlyTodoOn = false;
   let showDone = false;
 
+  let firstLoad = true;
+  let undoItem = null;
+  let undoTimer = null;
+
+  /* ---------- 状态 ---------- */
   function setState(state) {
     el.loading.hidden = state !== "loading";
     el.empty.hidden = state !== "empty";
@@ -52,10 +96,42 @@ function initListPage() {
     el.list.hidden = state === "loading" || state === "empty" || state === "error";
   }
 
+  /* ---------- 底部提示条 ---------- */
+  function hideToast() {
+    el.toast.hidden = true;
+    undoItem = null;
+  }
+
+  function showUndo(item) {
+    clearTimeout(undoTimer);
+    undoItem = item;
+    el.toastText.textContent = "已删除「" + item.title + "」";
+    el.toast.hidden = false;
+    undoTimer = setTimeout(hideToast, 8000);
+  }
+
+  el.toastUndo.addEventListener("click", async function () {
+    if (!undoItem) return;
+    const item = undoItem;
+
+    clearTimeout(undoTimer);
+    hideToast();
+
+    try {
+      const res = await apiFetch("/items/" + item.id + "/restore", { method: "POST" });
+      const json = await res.json().catch(function () { return {}; });
+      if (!res.ok || json.code !== 0) {
+        throw new Error(json.msg || ("服务器返回 " + res.status));
+      }
+      await loadItems();
+    } catch (err) {
+      window.alert("撤销失败：" + err.message);
+    }
+  });
+
+  /* ---------- 拉数据 ---------- */
   async function loadItems() {
-    setState("loading");
-    el.count.textContent = "";
-    el.list.innerHTML = "";
+    if (firstLoad) setState("loading");
 
     try {
       const res = await apiFetch("/items");
@@ -66,42 +142,86 @@ function initListPage() {
 
       allItems = json.data || [];
       renderList();
+
+      if (firstLoad) {
+        firstLoad = false;
+        restoreScroll();
+      }
     } catch (err) {
       el.errorMsg.textContent = "加载失败：" + err.message + "。请检查网络，或稍后点重试。";
       setState("error");
     }
   }
 
+  /* ---------- 回到列表时恢复滚动位置 ---------- */
+  function restoreScroll() {
+    try {
+      const saved = Number(sessionStorage.getItem("list_scroll") || 0);
+      if (saved > 0) window.scrollTo(0, saved);
+    } catch (e) {
+      // 忽略
+    }
+  }
+
+  function rememberScroll() {
+    try {
+      sessionStorage.setItem("list_scroll", String(window.scrollY));
+    } catch (e) {
+      // 忽略
+    }
+  }
+
+  /* ---------- 排序 ---------- */
+  function sortItems(arr) {
+    return arr.slice().sort(function (a, b) {
+      if (a.done !== b.done) return a.done ? 1 : -1;
+
+      if (sortBy === "title") {
+        return String(a.title).localeCompare(String(b.title), "zh");
+      }
+      if (sortBy === "created") {
+        return b.id - a.id;   // 新建的在前
+      }
+      // 按时间：有时间的在前，没时间的垫底
+      const ad = String(a.due || "\uffff");
+      const bd = String(b.due || "\uffff");
+      if (ad !== bd) return ad < bd ? -1 : 1;
+      return a.id - b.id;
+    });
+  }
+
+  /* ---------- 渲染 ---------- */
   function renderList() {
     const kw = keyword.trim().toLowerCase();
     const nowStr = toDateTimeStr(new Date());
 
-    // tab 上的未完成数量
-    const longCount = allItems.filter(function (it) { return it.kind === "long" && !it.done; }).length;
-    const shortCount = allItems.filter(function (it) { return it.kind === "short" && !it.done; }).length;
+    // tab 计数
+    const counts = {
+      all: allItems.filter(function (it) { return !it.done; }).length,
+      long: allItems.filter(function (it) { return it.kind === "long" && !it.done; }).length,
+      short: allItems.filter(function (it) { return it.kind === "short" && !it.done; }).length
+    };
 
     Array.prototype.forEach.call(el.tabs.children, function (btn) {
       const k = btn.dataset.kind;
       btn.classList.toggle("active", k === kind);
       const num = btn.querySelector(".tab-num");
-      if (num) num.textContent = k === "long" ? longCount : shortCount;
+      if (num) num.textContent = counts[k];
     });
 
-    const inTab = allItems.filter(function (it) { return it.kind === kind; });
+    // 搜索时跨类型，不受当前 tab 限制
+    const effectiveKind = kw ? "all" : kind;
 
-    const shown = inTab
-      .filter(function (it) {
-        if (onlyTodoOn && it.done) return false;
-        const hay = (it.title + " " + (it.note || "")).toLowerCase();
-        return hay.indexOf(kw) !== -1;
-      })
-      .sort(function (a, b) {
-        if (a.done !== b.done) return a.done ? 1 : -1;
-        const ad = String(a.due || "\uffff");
-        const bd = String(b.due || "\uffff");
-        if (ad !== bd) return ad < bd ? -1 : 1;
-        return a.id - b.id;
-      });
+    const inScope = allItems.filter(function (it) {
+      return effectiveKind === "all" || it.kind === effectiveKind;
+    });
+
+    const shown = sortItems(inScope.filter(function (it) {
+      if (onlyTodoOn && it.done) return false;
+      if (!kw) return true;
+      const hay = (it.title + " " + (it.note || "")).toLowerCase();
+      return hay.indexOf(kw) !== -1;
+    }));
 
     const undone = shown.filter(function (it) { return !it.done; });
     const finished = shown.filter(function (it) { return it.done; });
@@ -109,7 +229,7 @@ function initListPage() {
     el.list.innerHTML = "";
 
     undone.forEach(function (it) {
-      el.list.appendChild(createRow(it, nowStr));
+      el.list.appendChild(createRow(it, nowStr, kw));
     });
 
     if (finished.length > 0) {
@@ -129,22 +249,21 @@ function initListPage() {
 
       if (showDone) {
         finished.forEach(function (it) {
-          el.list.appendChild(createRow(it, nowStr));
+          el.list.appendChild(createRow(it, nowStr, kw));
         });
       }
     }
 
-    el.count.textContent = inTab.length > 0
-      ? "共 " + inTab.length + " 条 · 未完成 " +
-        inTab.filter(function (it) { return !it.done; }).length + " 条"
+    const scopeUndone = inScope.filter(function (it) { return !it.done; }).length;
+    el.count.textContent = inScope.length > 0
+      ? "共 " + inScope.length + " 条 · 未完成 " + scopeUndone + " 条" +
+        (kw ? "（搜索中，已跨类型）" : "")
       : "";
 
     if (shown.length === 0) {
-      el.empty.textContent = inTab.length === 0
-        ? (kind === "long"
-            ? "还没有长期任务。上面输入一条，或者点「＋ 新建待办」。"
-            : "还没有短期任务。点「＋ 新建待办」，选短期并设置时间。")
-        : "没有符合筛选条件的任务";
+      el.empty.textContent = inScope.length === 0
+        ? "这里还是空的。上面输入一条试试，或者点「＋ 新建待办」。"
+        : "没有符合条件的任务";
       setState("empty");
       return;
     }
@@ -152,7 +271,8 @@ function initListPage() {
     setState("data");
   }
 
-  function createRow(it, nowStr) {
+  /* ---------- 一行 ---------- */
+  function createRow(it, nowStr, kw) {
     const li = document.createElement("li");
     li.className = "item-row";
 
@@ -170,7 +290,14 @@ function initListPage() {
     a.className = "item-title";
     if (it.done) a.classList.add("done-text");
     a.href = "detail.html?id=" + it.id;
-    a.textContent = it.title;
+    a.title = "双击可以直接改标题";
+    appendHighlighted(a, it.title, kw);
+
+    a.addEventListener("click", rememberScroll);
+    a.addEventListener("dblclick", function (e) {
+      e.preventDefault();
+      beginInlineEdit(it, a, top);
+    });
 
     top.appendChild(badge);
     top.appendChild(a);
@@ -199,13 +326,13 @@ function initListPage() {
     toggle.type = "button";
     toggle.className = "btn-ghost";
     toggle.textContent = it.done ? "取消完成" : "完成";
-    toggle.addEventListener("click", function () { toggleDone(it, toggle); });
+    toggle.addEventListener("click", function () { toggleDone(it); });
 
     const del = document.createElement("button");
     del.type = "button";
     del.className = "btn-danger";
     del.textContent = "删除";
-    del.addEventListener("click", function () { deleteItem(it, del); });
+    del.addEventListener("click", function () { deleteItem(it); });
 
     actions.appendChild(toggle);
     actions.appendChild(del);
@@ -215,15 +342,70 @@ function initListPage() {
     return li;
   }
 
-  async function toggleDone(it, btn) {
-    btn.disabled = true;
-    btn.textContent = "处理中";
+  /* ---------- 原地改标题 ---------- */
+  function beginInlineEdit(it, titleEl, top) {
+    const input = document.createElement("input");
+    input.type = "text";
+    input.className = "inline-edit";
+    input.maxLength = 100;
+    input.value = it.title;
+
+    top.replaceChild(input, titleEl);
+    input.focus();
+    input.select();
+
+    let settled = false;
+
+    async function finish(save) {
+      if (settled) return;
+      settled = true;
+
+      const value = input.value.trim();
+
+      if (!save || !value || value === it.title) {
+        renderList();
+        return;
+      }
+
+      try {
+        const res = await apiFetch("/items/" + it.id, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: value })
+        });
+
+        const json = await res.json().catch(function () { return {}; });
+        if (!res.ok || json.code !== 0) {
+          throw new Error(json.msg || ("服务器返回 " + res.status));
+        }
+
+        it.title = json.data.title;
+      } catch (err) {
+        window.alert("改标题失败：" + err.message);
+      }
+
+      renderList();
+    }
+
+    input.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); finish(true); }
+      if (e.key === "Escape") { e.preventDefault(); finish(false); }
+    });
+
+    input.addEventListener("blur", function () { finish(true); });
+  }
+
+  /* ---------- 标记完成（先改界面，再同步） ---------- */
+  async function toggleDone(it) {
+    const previous = it.done;
+    it.done = !it.done;
+    renderList();
 
     try {
       const res = await apiFetch("/items/" + it.id, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ done: !it.done })
+        body: JSON.stringify({ done: it.done })
       });
 
       const json = await res.json().catch(function () { return {}; });
@@ -231,19 +413,22 @@ function initListPage() {
         throw new Error(json.msg || ("服务器返回 " + res.status));
       }
 
-      await loadItems();
+      Object.assign(it, json.data);
+      renderList();
     } catch (err) {
+      it.done = previous;
+      renderList();
       window.alert("修改失败：" + err.message);
-      btn.disabled = false;
-      btn.textContent = it.done ? "取消完成" : "完成";
     }
   }
 
-  async function deleteItem(it, btn) {
-    if (!window.confirm("确定删除「" + it.title + "」？")) return;
+  /* ---------- 删除（不弹确认，可撤销） ---------- */
+  async function deleteItem(it) {
+    const index = allItems.findIndex(function (x) { return x.id === it.id; });
+    if (index === -1) return;
 
-    btn.disabled = true;
-    btn.textContent = "删除中";
+    allItems.splice(index, 1);
+    renderList();
 
     try {
       const res = await apiFetch("/items/" + it.id, { method: "DELETE" });
@@ -251,28 +436,35 @@ function initListPage() {
       if (!res.ok || json.code !== 0) {
         throw new Error(json.msg || ("服务器返回 " + res.status));
       }
-      await loadItems();
+      showUndo(it);
     } catch (err) {
+      allItems.splice(index, 0, it);
+      renderList();
       window.alert("删除失败：" + err.message);
-      btn.disabled = false;
-      btn.textContent = "删除";
     }
   }
+
+  /* ---------- 快速添加 ---------- */
+  el.toggleNote.addEventListener("click", function () {
+    const willShow = el.newNote.hidden;
+    el.newNote.hidden = !willShow;
+    el.toggleNote.textContent = willShow ? "－ 收起说明" : "＋ 说明";
+    if (willShow) el.newNote.focus();
+  });
 
   el.form.addEventListener("submit", async function (e) {
     e.preventDefault();
 
     const title = el.newTitle.value.trim();
     if (!title) {
-      window.alert("先写点什么再提交");
+      el.newTitle.focus();
       return;
     }
 
-    // 短期任务必须选时间，跳去完整表单
-    if (kind === "short") {
-      location.href = "new.html?kind=short&title=" + encodeURIComponent(title);
-      return;
-    }
+    const dueRaw = el.newDue.value;            // "2026-11-20T14:30" 或空
+    const isShort = Boolean(dueRaw);
+    const due = dueRaw ? dueRaw.replace("T", " ") : "";
+    const note = el.newNote.value.trim();
 
     el.addBtn.disabled = true;
     el.addBtn.textContent = "添加中";
@@ -281,7 +473,12 @@ function initListPage() {
       const res = await apiFetch("/items", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: title, kind: "long" })
+        body: JSON.stringify({
+          title: title,
+          note: note,
+          kind: isShort ? "short" : "long",
+          due: due
+        })
       });
 
       const json = await res.json().catch(function () { return {}; });
@@ -289,8 +486,16 @@ function initListPage() {
         throw new Error(json.msg || ("服务器返回 " + res.status));
       }
 
+      allItems.push(json.data);
+
       el.newTitle.value = "";
-      await loadItems();
+      el.newDue.value = "";
+      el.newNote.value = "";
+      el.newNote.hidden = true;
+      el.toggleNote.textContent = "＋ 说明";
+
+      renderList();
+      el.newTitle.focus();   // 加完继续保持焦点，可以连着敲
     } catch (err) {
       window.alert("添加失败：" + err.message);
     } finally {
@@ -299,8 +504,14 @@ function initListPage() {
     }
   });
 
+  /* ---------- 筛选 / 排序 / tab ---------- */
   el.search.addEventListener("input", function (e) {
     keyword = e.target.value;
+    renderList();
+  });
+
+  el.sortBy.addEventListener("change", function (e) {
+    sortBy = e.target.value;
     renderList();
   });
 
@@ -313,17 +524,13 @@ function initListPage() {
     const btn = e.target.closest("[data-kind]");
     if (!btn) return;
     kind = btn.dataset.kind;
-    el.newTitle.placeholder = kind === "long"
-      ? "写一件长期要做的事，按回车添加"
-      : "短期任务需要时间，回车后去设置";
     renderList();
   });
 
   el.retry.addEventListener("click", function () {
+    firstLoad = true;
     loadItems();
   });
-
-  el.newTitle.placeholder = "写一件长期要做的事，按回车添加";
 
   loadItems();
 }
@@ -433,6 +640,7 @@ function initDetailPage() {
     const form = document.createElement("form");
     form.className = "stack-form";
 
+    // 类型
     const kindField = document.createElement("div");
     kindField.className = "field";
     const kindLabel = document.createElement("span");
@@ -455,6 +663,7 @@ function initDetailPage() {
 
     let curKind = it.kind;
 
+    // 标题
     const titleField = document.createElement("label");
     titleField.className = "field";
     const titleLabel = document.createElement("span");
@@ -467,6 +676,7 @@ function initDetailPage() {
     titleField.appendChild(titleLabel);
     titleField.appendChild(titleInput);
 
+    // 时间
     const dueField = document.createElement("label");
     dueField.className = "field";
     const dueLabel = document.createElement("span");
@@ -492,6 +702,7 @@ function initDetailPage() {
         : "不填表示没有截止日期";
     }
 
+    // 说明 + 字数提示
     const noteField = document.createElement("label");
     noteField.className = "field";
     const noteLabel = document.createElement("span");
@@ -500,9 +711,19 @@ function initDetailPage() {
     noteInput.rows = 4;
     noteInput.maxLength = 500;
     noteInput.value = it.note || "";
+    const noteCount = document.createElement("em");
+    noteCount.className = "field-hint char-count";
+    noteCount.textContent = noteInput.value.length + " / 500";
+
+    noteInput.addEventListener("input", function () {
+      noteCount.textContent = noteInput.value.length + " / 500";
+    });
+
     noteField.appendChild(noteLabel);
     noteField.appendChild(noteInput);
+    noteField.appendChild(noteCount);
 
+    // 完成
     const doneLabel = document.createElement("label");
     doneLabel.className = "check";
     const doneBox = document.createElement("input");

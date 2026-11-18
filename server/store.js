@@ -86,6 +86,18 @@ function init() {
     console.log("[store] 已为 " + migrated + " 条旧待办补上任务类型（默认长期）");
   }
 
+  // 软删除超过 30 天的，真正删掉
+  const beforePurge = db.items.length;
+  const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+  db.items = db.items.filter(function (it) {
+    if (!it.deletedAt) return true;
+    const t = Date.parse(String(it.deletedAt).replace(" ", "T"));
+    return !isNaN(t) && t > cutoff;
+  });
+  if (beforePurge !== db.items.length) {
+    console.log("[store] 已彻底清除 " + (beforePurge - db.items.length) + " 条删除超过 30 天的待办");
+  }
+
   save();
   console.log("[store] 用户 " + db.users.length + " 个，待办 " + db.items.length + " 条");
 }
@@ -176,6 +188,7 @@ function list(userId, opts) {
   return db.items
     .filter(function (it) {
       if (it.userId !== userId) return false;
+      if (it.deletedAt) return false;
       if (kind && it.kind !== kind) return false;
       // date 形如 2026-11-20，匹配 due 的前 10 位
       if (date && String(it.due || "").slice(0, 10) !== date) return false;
@@ -193,7 +206,7 @@ function list(userId, opts) {
 
 function get(userId, id) {
   return db.items.find(function (it) {
-    return it.id === id && it.userId === userId;
+    return it.id === id && it.userId === userId && !it.deletedAt;
   }) || null;
 }
 
@@ -227,12 +240,22 @@ function update(userId, id, patch) {
   return item;
 }
 
+// 软删除：只打标记，不真的删，这样前端可以「撤销」
 function remove(userId, id) {
-  const idx = db.items.findIndex(function (it) {
-    return it.id === id && it.userId === userId;
+  const item = get(userId, id);
+  if (!item) return false;
+  item.deletedAt = now();
+  save();
+  return true;
+}
+
+// 撤销删除
+function restore(userId, id) {
+  const item = db.items.find(function (it) {
+    return it.id === id && it.userId === userId && it.deletedAt;
   });
-  if (idx === -1) return false;
-  db.items.splice(idx, 1);
+  if (!item) return false;
+  delete item.deletedAt;
   save();
   return true;
 }
@@ -250,5 +273,6 @@ module.exports = {
   create,
   update,
   remove,
+  restore,
   filePath
 };

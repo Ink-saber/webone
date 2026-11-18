@@ -151,7 +151,24 @@ app.delete("/api/items/:id", auth.requireAuth, function (req, res) {
     return fail(res, 404, 4004, "没有编号为 " + id + " 的待办");
   }
 
-  ok(res, null, "删除成功");
+  ok(res, { id: id }, "已删除，可撤销");
+});
+
+/* ============================================================
+   撤销删除
+   ============================================================ */
+app.post("/api/items/:id/restore", auth.requireAuth, function (req, res) {
+  const id = Number(req.params.id);
+
+  if (!Number.isInteger(id) || id <= 0) {
+    return fail(res, 400, 4001, "id 必须是正整数");
+  }
+
+  if (!store.restore(req.userId, id)) {
+    return fail(res, 404, 4004, "没有可恢复的条目，可能已经彻底删除了");
+  }
+
+  ok(res, store.get(req.userId, id), "已恢复");
 });
 
 // 修改
