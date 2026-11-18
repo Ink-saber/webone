@@ -53,7 +53,17 @@ const SYSTEM_PROMPT = [
   "2. 查到多条时用列表，每条一行，带上「已完成/待办」状态。",
   "3. 没查到就说没查到，不要编。",
   "",
-  "其他要求：用简体中文，简洁直接，不啰嗦。不确定的事直接说不知道。"
+  "其他要求：用简体中文，简洁直接，不啰嗦。不确定的事直接说不知道。",
+  "",
+  "【日期换算规则，必须严格遵守】",
+  "用户会说「明天」「后天」「周五」这类相对时间，你要先换算成具体日期再填 due：",
+  "- 今天 = 当前日期本身",
+  "- 明天 = 当前日期往后 1 天",
+  "- 后天 = 当前日期往后 2 天",
+  "- 今晚、今天下午、今天几点 = 当前日期",
+  "- 周五、下周一 = 当前日期之后最近的那一天（含今天）",
+  "换算示例：当前是 2026-11-18（星期三），用户说「明天下午三点」→ due = 2026-11-19 15:00。",
+  "注意是「往后 1 天」，不要多加一天。算不准时，宁可只调用 add_item 填标题，再向用户确认具体日期。"
 ].join("\n");
 
 /* ============================================================
@@ -73,7 +83,9 @@ const TOOLS = [
         properties: {
           title: {
             type: "string",
-            description: "待办标题，一句话，最多 100 个字。用用户的原话，不要编造。"
+            description:
+              "待办标题，一句话，最多 100 个字。用用户的原话，但把其中的时间词去掉" +
+              "（「明天下午三点提醒我交周报」→ 标题是「交周报」，时间放进 due）。不要编造。"
           },
           note: {
             type: "string",
@@ -206,6 +218,18 @@ function runTool(name, args, userId) {
   }
 
   return { ok: false, error: "没有叫 " + name + " 的工具" };
+}
+
+/* ---------- 当前时间（北京时间） ----------
+   服务器跑在 UTC，用户在中国，差 8 小时。
+   这里直接按 +8 计算，避免用户说「明天」「今晚」时算错一天。 */
+function nowInChina() {
+  const d = new Date(Date.now() + 8 * 3600 * 1000);
+  const weeks = ["日", "一", "二", "三", "四", "五", "六"];
+  return {
+    text: d.toISOString().slice(0, 16).replace("T", " "),
+    weekday: "星期" + weeks[d.getUTCDay()]
+  };
 }
 
 /* ---------- 历史裁剪 ---------- */
@@ -394,7 +418,13 @@ function register(app, fail, requireAuth) {
 
     try {
       // 对话上下文，会随着工具调用不断追加
-      const conversation = [{ role: "system", content: SYSTEM_PROMPT }].concat(history);
+      const now = nowInChina();
+      const conversation = [{
+        role: "system",
+        content: SYSTEM_PROMPT +
+          "\n\n当前时间：" + now.text + "（" + now.weekday + "，北京时间，格式 YYYY-MM-DD HH:mm）。" +
+          "所有相对时间都以此为准，第一天就是今天。"
+      }].concat(history);
 
       let rounds = 0;
 
