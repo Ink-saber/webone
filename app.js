@@ -1,32 +1,20 @@
 /* ============================================================
-   app.js —— 清单页（日历 + 长期/短期两类列表）与详情页
+   app.js —— 清单页 与 详情页
 
-   任务分两类：
-     long  长期任务：没有具体时刻，截止日期可选
-     short 短期任务：必须在某个日期和时间完成
-
-   当天有安排的任务（两类都算）会在日历对应日期上打点，
-   点某一天，下方列出那天的全部安排。
+   日历在单独的 calendar.html / calendar.js 里。
    ============================================================ */
-
-/* ---------- 日期小工具 ---------- */
 
 function pad2(n) {
   return String(n).padStart(2, "0");
 }
 
-function toDateStr(d) {
-  return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
-}
-
 function toDateTimeStr(d) {
-  return toDateStr(d) + " " + pad2(d.getHours()) + ":" + pad2(d.getMinutes());
+  return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()) +
+    " " + pad2(d.getHours()) + ":" + pad2(d.getMinutes());
 }
 
 // "2026-11-20 14:30" → "11-20 14:30"；"2026-11-20" → "11-20"
 function shortDue(due) {
-  if (!due) return "";
-  if (due.length > 10) return due.slice(5);
   return due.slice(5);
 }
 
@@ -36,15 +24,6 @@ function shortDue(due) {
 function initListPage() {
 
   const el = {
-    // 日历
-    calTitle: document.getElementById("cal-title"),
-    calPrev: document.getElementById("cal-prev"),
-    calNext: document.getElementById("cal-next"),
-    calGrid: document.getElementById("cal-grid"),
-    dayTitle: document.getElementById("day-title"),
-    dayAdd: document.getElementById("day-add"),
-    dayList: document.getElementById("day-list"),
-    // 列表
     form: document.getElementById("add-form"),
     newTitle: document.getElementById("new-title"),
     addBtn: document.getElementById("add-btn"),
@@ -66,12 +45,6 @@ function initListPage() {
   let onlyTodoOn = false;
   let showDone = false;
 
-  const today = new Date();
-  let calYear = today.getFullYear();
-  let calMonth = today.getMonth();          // 0-11
-  let selectedDate = toDateStr(today);
-
-  /* ---------- 状态显示 ---------- */
   function setState(state) {
     el.loading.hidden = state !== "loading";
     el.empty.hidden = state !== "empty";
@@ -79,7 +52,6 @@ function initListPage() {
     el.list.hidden = state === "loading" || state === "empty" || state === "error";
   }
 
-  /* ---------- 拉数据 ---------- */
   async function loadItems() {
     setState("loading");
     el.count.textContent = "";
@@ -93,165 +65,26 @@ function initListPage() {
       if (json.code !== 0) throw new Error(json.msg || "接口返回失败");
 
       allItems = json.data || [];
-      renderAll();
+      renderList();
     } catch (err) {
       el.errorMsg.textContent = "加载失败：" + err.message + "。请检查网络，或稍后点重试。";
       setState("error");
     }
   }
 
-  function renderAll() {
-    renderCalendar();
-    renderDayPanel();
-    renderList();
-  }
-
-  /* ============================================================
-     日历
-     ============================================================ */
-  function renderCalendar() {
-    el.calTitle.textContent = calYear + " 年 " + (calMonth + 1) + " 月";
-
-    const todayStr = toDateStr(new Date());
-    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-    const startOffset = (new Date(calYear, calMonth, 1).getDay() + 6) % 7; // 周一为 0
-
-    // 每一天有几条安排
-    const counts = {};
-    allItems.forEach(function (it) {
-      if (!it.due) return;
-      const d = String(it.due).slice(0, 10);
-      if (!counts[d]) counts[d] = { total: 0, undone: 0 };
-      counts[d].total++;
-      if (!it.done) counts[d].undone++;
-    });
-
-    el.calGrid.innerHTML = "";
-
-    ["一", "二", "三", "四", "五", "六", "日"].forEach(function (w) {
-      const head = document.createElement("div");
-      head.className = "cal-weekday";
-      head.textContent = w;
-      el.calGrid.appendChild(head);
-    });
-
-    for (let i = 0; i < startOffset; i++) {
-      const blank = document.createElement("div");
-      blank.className = "cal-cell blank";
-      el.calGrid.appendChild(blank);
-    }
-
-    for (let day = 1; day <= daysInMonth; day++) {
-      const ds = calYear + "-" + pad2(calMonth + 1) + "-" + pad2(day);
-
-      const cell = document.createElement("button");
-      cell.type = "button";
-      cell.className = "cal-cell";
-      cell.textContent = String(day);
-
-      if (ds === todayStr) cell.classList.add("today");
-      if (ds === selectedDate) cell.classList.add("selected");
-      if (counts[ds]) {
-        cell.classList.add("has-task");
-        const dot = document.createElement("span");
-        dot.className = "cal-dot" + (counts[ds].undone === 0 ? " all-done" : "");
-        cell.appendChild(dot);
-      }
-
-      cell.addEventListener("click", function () {
-        selectedDate = ds;
-        renderCalendar();
-        renderDayPanel();
-      });
-
-      el.calGrid.appendChild(cell);
-    }
-  }
-
-  function renderDayPanel() {
-    const d = new Date(selectedDate + "T00:00:00");
-    const week = "日一二三四五六"[d.getDay()];
-    const isToday = selectedDate === toDateStr(new Date());
-
-    el.dayTitle.textContent =
-      (d.getMonth() + 1) + " 月 " + d.getDate() + " 日 · 周" + week +
-      (isToday ? " · 今天" : "");
-
-    el.dayAdd.href = "new.html?kind=short&date=" + selectedDate;
-
-    const items = allItems
-      .filter(function (it) {
-        return it.due && String(it.due).slice(0, 10) === selectedDate;
-      })
-      .sort(function (a, b) {
-        return String(a.due).localeCompare(String(b.due));
-      });
-
-    el.dayList.innerHTML = "";
-
-    if (items.length === 0) {
-      const p = document.createElement("p");
-      p.className = "day-empty";
-      p.textContent = "这天没有安排";
-      el.dayList.appendChild(p);
-      return;
-    }
-
-    items.forEach(function (it) {
-      const row = document.createElement("a");
-      row.className = "day-item" + (it.done ? " is-done" : "");
-      row.href = "detail.html?id=" + it.id;
-
-      const time = document.createElement("span");
-      time.className = "day-time";
-      time.textContent = (it.kind === "short" && it.due.length > 10)
-        ? it.due.slice(11)
-        : "全天";
-
-      const title = document.createElement("span");
-      title.className = "day-title";
-      title.textContent = it.title;
-
-      const badge = document.createElement("span");
-      badge.className = "badge " + (it.kind === "short" ? "short" : "long");
-      badge.textContent = it.kind === "short" ? "短期" : "长期";
-
-      row.appendChild(time);
-      row.appendChild(title);
-      row.appendChild(badge);
-      el.dayList.appendChild(row);
-    });
-  }
-
-  el.calPrev.addEventListener("click", function () {
-    calMonth--;
-    if (calMonth < 0) { calMonth = 11; calYear--; }
-    renderCalendar();
-  });
-
-  el.calNext.addEventListener("click", function () {
-    calMonth++;
-    if (calMonth > 11) { calMonth = 0; calYear++; }
-    renderCalendar();
-  });
-
-  /* ============================================================
-     列表
-     ============================================================ */
   function renderList() {
     const kw = keyword.trim().toLowerCase();
     const nowStr = toDateTimeStr(new Date());
 
-    // 先把 tab 上的数字更新掉
+    // tab 上的未完成数量
     const longCount = allItems.filter(function (it) { return it.kind === "long" && !it.done; }).length;
     const shortCount = allItems.filter(function (it) { return it.kind === "short" && !it.done; }).length;
 
     Array.prototype.forEach.call(el.tabs.children, function (btn) {
       const k = btn.dataset.kind;
       btn.classList.toggle("active", k === kind);
-      const label = btn.querySelector(".tab-label");
       const num = btn.querySelector(".tab-num");
-      if (label && num) num.textContent = k === "long" ? longCount : shortCount;
+      if (num) num.textContent = k === "long" ? longCount : shortCount;
     });
 
     const inTab = allItems.filter(function (it) { return it.kind === kind; });
@@ -264,7 +97,6 @@ function initListPage() {
       })
       .sort(function (a, b) {
         if (a.done !== b.done) return a.done ? 1 : -1;
-        // 有时间的按时间排，没时间的放后面
         const ad = String(a.due || "\uffff");
         const bd = String(b.due || "\uffff");
         if (ad !== bd) return ad < bd ? -1 : 1;
@@ -303,7 +135,8 @@ function initListPage() {
     }
 
     el.count.textContent = inTab.length > 0
-      ? "共 " + inTab.length + " 条 · 未完成 " + inTab.filter(function (it) { return !it.done; }).length + " 条"
+      ? "共 " + inTab.length + " 条 · 未完成 " +
+        inTab.filter(function (it) { return !it.done; }).length + " 条"
       : "";
 
     if (shown.length === 0) {
@@ -350,7 +183,6 @@ function initListPage() {
       const time = document.createElement("span");
       time.textContent = it.kind === "short" ? shortDue(it.due) : "截止 " + shortDue(it.due);
 
-      // 未完成且时间已过 → 标成逾期
       if (!it.done && it.due < nowStr) {
         time.classList.add("overdue");
         time.textContent += " · 已逾期";
@@ -382,8 +214,6 @@ function initListPage() {
     li.appendChild(actions);
     return li;
   }
-
-  /* ---------- 增删改 ---------- */
 
   async function toggleDone(it, btn) {
     btn.disabled = true;
@@ -429,8 +259,6 @@ function initListPage() {
     }
   }
 
-  /* ---------- 快速添加 ---------- */
-
   el.form.addEventListener("submit", async function (e) {
     e.preventDefault();
 
@@ -440,7 +268,7 @@ function initListPage() {
       return;
     }
 
-    // 当前在「短期」tab 时，快速添加没法确定时间，直接带着标题去完整表单
+    // 短期任务必须选时间，跳去完整表单
     if (kind === "short") {
       location.href = "new.html?kind=short&title=" + encodeURIComponent(title);
       return;
@@ -471,8 +299,6 @@ function initListPage() {
     }
   });
 
-  /* ---------- 筛选与 tab ---------- */
-
   el.search.addEventListener("input", function (e) {
     keyword = e.target.value;
     renderList();
@@ -497,7 +323,6 @@ function initListPage() {
     loadItems();
   });
 
-  // 输入框提示跟着 tab 变
   el.newTitle.placeholder = "写一件长期要做的事，按回车添加";
 
   loadItems();
@@ -602,14 +427,12 @@ function initDetailPage() {
     showBack();
   }
 
-  /* ---------- 编辑 ---------- */
   function renderEditForm(it) {
     box.innerHTML = "";
 
     const form = document.createElement("form");
     form.className = "stack-form";
 
-    // 类型
     const kindField = document.createElement("div");
     kindField.className = "field";
     const kindLabel = document.createElement("span");
@@ -620,12 +443,10 @@ function initDetailPage() {
     const optLong = document.createElement("button");
     optLong.type = "button";
     optLong.textContent = "长期任务";
-    optLong.dataset.kind = "long";
 
     const optShort = document.createElement("button");
     optShort.type = "button";
     optShort.textContent = "短期任务";
-    optShort.dataset.kind = "short";
 
     kindWrap.appendChild(optLong);
     kindWrap.appendChild(optShort);
@@ -634,19 +455,6 @@ function initDetailPage() {
 
     let curKind = it.kind;
 
-    function paintKind() {
-      optLong.classList.toggle("active", curKind === "long");
-      optShort.classList.toggle("active", curKind === "short");
-      dueField.style.display = "block";
-      dueLabel.textContent = curKind === "short" ? "提醒时间（必填）" : "截止日期（可选）";
-      dueInput.type = curKind === "short" ? "datetime-local" : "date";
-      dueInput.required = curKind === "short";
-      dueHint.textContent = curKind === "short"
-        ? "到点提醒你要做这件事"
-        : "不填表示没有截止日期";
-    }
-
-    // 标题
     const titleField = document.createElement("label");
     titleField.className = "field";
     const titleLabel = document.createElement("span");
@@ -659,7 +467,6 @@ function initDetailPage() {
     titleField.appendChild(titleLabel);
     titleField.appendChild(titleInput);
 
-    // 时间
     const dueField = document.createElement("label");
     dueField.className = "field";
     const dueLabel = document.createElement("span");
@@ -674,7 +481,17 @@ function initDetailPage() {
       dueInput.value = it.kind === "short" ? it.due.replace(" ", "T") : it.due;
     }
 
-    // 说明
+    function paintKind() {
+      optLong.classList.toggle("active", curKind === "long");
+      optShort.classList.toggle("active", curKind === "short");
+      dueLabel.textContent = curKind === "short" ? "提醒时间（必填）" : "截止日期（可选）";
+      dueInput.type = curKind === "short" ? "datetime-local" : "date";
+      dueInput.required = curKind === "short";
+      dueHint.textContent = curKind === "short"
+        ? "到点提醒你要做这件事"
+        : "不填表示没有截止日期";
+    }
+
     const noteField = document.createElement("label");
     noteField.className = "field";
     const noteLabel = document.createElement("span");
@@ -686,7 +503,6 @@ function initDetailPage() {
     noteField.appendChild(noteLabel);
     noteField.appendChild(noteInput);
 
-    // 完成
     const doneLabel = document.createElement("label");
     doneLabel.className = "check";
     const doneBox = document.createElement("input");
@@ -730,7 +546,6 @@ function initDetailPage() {
 
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
-
       err.hidden = true;
 
       const dueValue = dueInput.value

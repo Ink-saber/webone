@@ -41,7 +41,6 @@ function applyBranding() {
   const titles = {
     list: CONFIG.SITE_NAME,
     detail: "详情 · " + CONFIG.SITE_NAME,
-    new: "新建 · " + CONFIG.SITE_NAME,
     chat: CONFIG.AI_NAME + " · " + CONFIG.SITE_NAME,
     login: "登录 · " + CONFIG.SITE_NAME
   };

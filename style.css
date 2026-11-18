@@ -738,6 +738,17 @@ body[data-page="chat"] .chat-form {
 
 .cal-title { font-size: 14px; font-weight: 600; }
 
+.cal-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cal-nav .cal-title {
+  min-width: 96px;
+  text-align: center;
+}
+
 .cal-arrow {
   width: 30px;
   height: 30px;
