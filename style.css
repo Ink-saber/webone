@@ -260,69 +260,38 @@ h2,
    主题切换器
    ============================================================ */
 
-.theme-btn {
+/* 切换器：并排四个按钮，直接点，没有弹层 */
+.theme-switch {
   display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
+  align-items: stretch;
+  flex: none;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.theme-switch button {
+  padding: 3px 9px;
   font: inherit;
   font-size: 12px;
+  line-height: 1.7;
   color: var(--text-soft);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-}
-
-.theme-btn:hover {
-  color: var(--text);
-  border-color: var(--primary-faint);
-}
-
-.theme-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  flex: none;
-}
-
-.theme-wrap {
-  position: relative;
-}
-
-.theme-panel {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 6px);
-  z-index: 60;
-  width: 168px;
-  padding: 6px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: 0 8px 24px rgba(40, 34, 22, 0.14);
-}
-
-.theme-option {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 7px 9px;
-  font: inherit;
-  font-size: 13px;
-  color: var(--text);
   background: transparent;
   border: none;
-  border-radius: var(--radius-sm);
   cursor: pointer;
-  text-align: left;
 }
 
-.theme-option:hover { background: var(--hover); }
+.theme-switch button + button {
+  border-left: 1px solid var(--line);
+}
 
-.theme-option.active {
+.theme-switch button:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.theme-switch button.active {
   background: var(--primary-soft);
   color: var(--primary-dark);
   font-weight: 600;
