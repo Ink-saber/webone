@@ -187,9 +187,18 @@ body {
 .bg-art {
   position: fixed;
   inset: 0;
-  z-index: -1;
+  z-index: 0;
   pointer-events: none;
   overflow: hidden;
+}
+
+/* 正文抬到画面之上（不用负 z-index，避免被根背景吃掉） */
+body > header,
+body > nav,
+body > main,
+body > footer {
+  position: relative;
+  z-index: 1;
 }
 
 .bg-art svg {
