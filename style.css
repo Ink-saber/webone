@@ -163,14 +163,52 @@
    古风细节：纸纹、衬线标题、朱砂点缀
    ============================================================ */
 
-body {
-  font-family: var(--font-body);
+html {
+  background-color: var(--bg);
   /* 极淡的横纹，模拟宣纸的帘纹，不仔细看看不出来 */
   background-image: repeating-linear-gradient(
     0deg,
     rgba(0, 0, 0, 0.012) 0 1px,
     transparent 1px 3px
   );
+}
+
+/* body 必须透明，否则会盖住下面的 .bg-art 画面层 */
+body {
+  font-family: var(--font-body);
+  background: transparent;
+}
+
+/* ============================================================
+   背景画面层（由 theme.js 插入的内联 SVG）
+   z-index:-1 会画在根背景之上、正文之下，所以正文不受影响
+   ============================================================ */
+
+.bg-art {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.bg-art svg {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* 四季点缀：只显示当前季节那一组 */
+.bg-art .season { display: none; }
+
+[data-theme="spring"] .bg-art .season-spring,
+[data-theme="summer"] .bg-art .season-summer,
+[data-theme="autumn"] .bg-art .season-autumn,
+[data-theme="winter"] .bg-art .season-winter {
+  display: inline;
 }
 
 .brand h1,
