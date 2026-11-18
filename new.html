@@ -11,7 +11,7 @@
   <header class="site-header">
     <div class="brand">
       <h1>新建待办</h1>
-      <p class="subtitle">写清楚一点，以后回头看不用猜</p>
+      <p class="subtitle">长期还是短期，先定下来</p>
     </div>
     <div class="user-bar">
       <span id="user-name" class="user-name"></span>
@@ -29,14 +29,29 @@
 
       <form id="new-form" class="stack-form">
 
+        <div class="field">
+          <span>类型 <em class="required-mark">必选</em></span>
+          <div class="segmented" id="kind-seg">
+            <button type="button" data-kind="long" class="active">长期任务</button>
+            <button type="button" data-kind="short">短期任务</button>
+          </div>
+          <em class="field-hint" id="kind-hint"></em>
+        </div>
+
         <label class="field">
           <span>标题 <em class="required-mark">必填</em></span>
           <input id="title" type="text" maxlength="100" placeholder="要做什么？" required>
         </label>
 
+        <label class="field" id="due-field">
+          <span id="due-label">截止日期（可选）</span>
+          <input id="due" type="date">
+          <em class="field-hint" id="due-hint"></em>
+        </label>
+
         <label class="field">
           <span>说明（可选）</span>
-          <textarea id="note" rows="5" maxlength="500"
+          <textarea id="note" rows="4" maxlength="500"
                     placeholder="补充背景、截止时间、具体步骤、相关链接……"></textarea>
         </label>
 

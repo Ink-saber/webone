@@ -73,6 +73,19 @@ function init() {
     console.log("[store] 已清理 " + (before - db.items.length) + " 条无归属的旧待办");
   }
 
+  // 老数据补新字段：默认都是长期任务、无截止日期
+  let migrated = 0;
+  db.items.forEach(function (it) {
+    if (it.kind !== "long" && it.kind !== "short") {
+      it.kind = "long";
+      migrated++;
+    }
+    if (typeof it.due !== "string") it.due = "";
+  });
+  if (migrated) {
+    console.log("[store] 已为 " + migrated + " 条旧待办补上任务类型（默认长期）");
+  }
+
   save();
   console.log("[store] 用户 " + db.users.length + " 个，待办 " + db.items.length + " 条");
 }
@@ -157,10 +170,15 @@ function cleanExpiredSessions() {
 function list(userId, opts) {
   const done = opts && opts.done;
   const q = opts && opts.q ? String(opts.q).toLowerCase() : "";
+  const kind = opts && opts.kind;
+  const date = opts && opts.date;
 
   return db.items
     .filter(function (it) {
       if (it.userId !== userId) return false;
+      if (kind && it.kind !== kind) return false;
+      // date 形如 2026-11-20，匹配 due 的前 10 位
+      if (date && String(it.due || "").slice(0, 10) !== date) return false;
       if (done === true && !it.done) return false;
       if (done === false && it.done) return false;
       if (q) {
@@ -183,6 +201,8 @@ function create(userId, input) {
   const item = {
     id: db.nextItemId++,
     userId: userId,
+    kind: input.kind === "short" ? "short" : "long",
+    due: typeof input.due === "string" ? input.due : "",
     title: input.title,
     note: input.note || "",
     done: input.done === true,
@@ -197,6 +217,8 @@ function update(userId, id, patch) {
   const item = get(userId, id);
   if (!item) return null;
 
+  if (patch.kind !== undefined) item.kind = patch.kind;
+  if (patch.due !== undefined) item.due = patch.due;
   if (patch.title !== undefined) item.title = patch.title;
   if (patch.note !== undefined) item.note = patch.note;
   if (patch.done !== undefined) item.done = patch.done;

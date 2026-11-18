@@ -36,7 +36,12 @@ const SYSTEM_PROMPT = [
   "",
   "你有两个工具可以真的操作他的待办清单：",
   "- add_item：新增一条待办",
-  "- query_items：查询待办（可以按「是否完成」和「关键字」筛）",
+  "- query_items：查询待办（可以按「是否完成」「关键字」「类型」「某一天」筛）",
+  "",
+  "任务分两类，添加时要说清楚：",
+  "- 长期任务（kind=long）：没有具体时刻，可以设截止日期，也可以不设",
+  "- 短期任务（kind=short）：必须在某个具体日期和时间完成，due 必填，格式 YYYY-MM-DD HH:mm",
+  "用户说「明天下午三点交表」是短期；说「这周内整理资料」是长期。拿不准就问一句。",
   "",
   "什么时候用工具：",
   "- 他说「帮我记一条」「加个待办」「把这个写进去」→ 用 add_item，标题照他的话说，不要自己编",
@@ -73,6 +78,21 @@ const TOOLS = [
           note: {
             type: "string",
             description: "补充说明，可选，最多 500 个字。"
+          },
+          kind: {
+            type: "string",
+            enum: ["long", "short"],
+            description:
+              "任务类型。long=长期任务（没有固定时刻，可设截止日期）；" +
+              "short=短期任务（必须在某个具体日期和时间完成）。" +
+              "用户说「明天下午三点」「今晚八点」「周五 14:30」这类具体时刻，就是 short；" +
+              "只是「本周内」「有空做」「长期跟进」，就是 long。"
+          },
+          due: {
+            type: "string",
+            description:
+              "时间。short 必填，格式 YYYY-MM-DD HH:mm（例如 2026-11-20 14:30）；" +
+              "long 可选，只写日期 YYYY-MM-DD（例如 2026-11-20）；都不填就留空。"
           }
         },
         required: ["title"]
@@ -96,6 +116,15 @@ const TOOLS = [
           keyword: {
             type: "string",
             description: "按标题里的关键字筛选，可选。"
+          },
+          kind: {
+            type: "string",
+            enum: ["long", "short"],
+            description: "只查某一类：long=长期任务，short=短期任务。不传表示两类都查。"
+          },
+          date: {
+            type: "string",
+            description: "只查某一天的任务，格式 YYYY-MM-DD，例如 2026-11-20。"
           }
         },
         required: []
@@ -118,16 +147,30 @@ function runTool(name, args, userId) {
       return { ok: false, error: "title 超过 100 个字，请精简后再调用" };
     }
 
+    const kind = args.kind === "short" ? "short" : "long";
+    const due = typeof args.due === "string" ? args.due.trim() : "";
+
+    if (kind === "short" && !/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(due)) {
+      return {
+        ok: false,
+        error: "短期任务必须给 due，格式 YYYY-MM-DD HH:mm，请向用户确认具体日期和时间"
+      };
+    }
+
     const item = store.create(userId, {
       title: title,
       note: typeof args.note === "string" ? args.note : "",
-      done: false
+      done: false,
+      kind: kind,
+      due: due
     });
 
     return {
       ok: true,
       data: item,
-      summary: "已新增第 " + item.id + " 条：" + item.title
+      summary: "已新增第 " + item.id + " 条（" +
+        (kind === "short" ? "短期" : "长期") + "）：" + item.title +
+        (due ? "，时间 " + due : "")
     };
   }
 
@@ -137,6 +180,10 @@ function runTool(name, args, userId) {
     if (typeof args.keyword === "string" && args.keyword.trim()) {
       opts.q = args.keyword.trim();
     }
+    if (args.kind === "long" || args.kind === "short") opts.kind = args.kind;
+    if (typeof args.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(args.date)) {
+      opts.date = args.date;
+    }
 
     const rows = store.list(userId, opts);
 
@@ -145,7 +192,13 @@ function runTool(name, args, userId) {
       data: {
         总数: rows.length,
         条目: rows.map(function (r) {
-          return { 编号: r.id, 标题: r.title, 状态: r.done ? "已完成" : "待办" };
+          return {
+            编号: r.id,
+            标题: r.title,
+            类型: r.kind === "short" ? "短期" : "长期",
+            时间: r.due || "未设置",
+            状态: r.done ? "已完成" : "待办"
+          };
         })
       },
       summary: "查到 " + rows.length + " 条"

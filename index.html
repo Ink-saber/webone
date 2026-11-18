@@ -25,15 +25,45 @@
   </nav>
 
   <main>
+
+    <!-- 日历 -->
+    <section class="panel calendar-card">
+      <div class="cal-head">
+        <button id="cal-prev" class="cal-arrow" type="button" aria-label="上个月">‹</button>
+        <span id="cal-title" class="cal-title"></span>
+        <button id="cal-next" class="cal-arrow" type="button" aria-label="下个月">›</button>
+      </div>
+
+      <div id="cal-grid" class="cal-grid"></div>
+
+      <div class="day-panel">
+        <div class="day-head">
+          <span id="day-title" class="day-head-title"></span>
+          <a id="day-add" class="btn-text" href="new.html">＋ 当天添加</a>
+        </div>
+        <div id="day-list" class="day-list"></div>
+      </div>
+    </section>
+
+    <!-- 列表 -->
     <section class="panel">
 
       <div class="panel-head">
-        <span class="panel-hint">随手记一条，或者写完整一点</span>
+        <div class="tabs" id="kind-tabs">
+          <button type="button" data-kind="long" class="active">
+            <span class="tab-label">长期任务</span>
+            <span class="tab-num">0</span>
+          </button>
+          <button type="button" data-kind="short">
+            <span class="tab-label">短期任务</span>
+            <span class="tab-num">0</span>
+          </button>
+        </div>
         <a class="btn-primary btn-link" href="new.html">＋ 新建待办</a>
       </div>
 
       <form id="add-form" class="add-form">
-        <input id="new-title" type="text" maxlength="100" placeholder="写一件事，按回车添加" required>
+        <input id="new-title" type="text" maxlength="100" placeholder="写一件长期要做的事，按回车添加" required>
         <button id="add-btn" class="btn-ghost" type="submit">快速添加</button>
       </form>
 

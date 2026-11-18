@@ -17,6 +17,24 @@ const chat = require("./chat");
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+/* ---------- 任务类型与时间格式 ---------- */
+
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;                 // 2026-11-20
+const DATETIME_RE = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/; // 2026-11-20 14:30
+
+// 返回 null 表示合法，否则返回一句人话
+function checkDue(kind, due) {
+  if (kind === "short") {
+    if (!due) return "短期任务必须设置提醒时间，格式 YYYY-MM-DD HH:mm";
+    if (!DATETIME_RE.test(due)) return "提醒时间格式应为 YYYY-MM-DD HH:mm，例如 2026-11-20 14:30";
+    return null;
+  }
+  if (due && !DATE_RE.test(due)) {
+    return "截止日期格式应为 YYYY-MM-DD，例如 2026-11-20";
+  }
+  return null;
+}
+
 /* ---------- 跨域 ---------- */
 app.use(function (req, res, next) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -57,6 +75,8 @@ app.get("/api/items", auth.requireAuth, function (req, res) {
   if (req.query.done === "true") opts.done = true;
   if (req.query.done === "false") opts.done = false;
   if (req.query.q) opts.q = req.query.q;
+  if (req.query.kind === "long" || req.query.kind === "short") opts.kind = req.query.kind;
+  if (req.query.date && DATE_RE.test(req.query.date)) opts.date = req.query.date;
 
   const rows = store.list(req.userId, opts);
   ok(res, rows, "共 " + rows.length + " 条");
@@ -103,7 +123,18 @@ app.post("/api/items", auth.requireAuth, function (req, res) {
     done = body.done;
   }
 
-  const item = store.create(req.userId, { title: title, note: note, done: done });
+  const kind = body.kind === "short" ? "short" : "long";
+  const due = typeof body.due === "string" ? body.due.trim() : "";
+  const dueProblem = checkDue(kind, due);
+  if (dueProblem) return fail(res, 400, 4001, dueProblem);
+
+  const item = store.create(req.userId, {
+    title: title,
+    note: note,
+    done: done,
+    kind: kind,
+    due: due
+  });
   ok(res, item, "新增成功", 201);
 });
 
@@ -158,6 +189,22 @@ app.put("/api/items/:id", auth.requireAuth, function (req, res) {
     }
     patch.done = body.done;
   }
+
+  const nextKind = body.kind === undefined ? row.kind : (body.kind === "short" ? "short" : "long");
+  let nextDue = body.due === undefined
+    ? row.due
+    : (typeof body.due === "string" ? body.due.trim() : "");
+
+  // 短期改长期时，原来的「日期 时刻」自动截成日期，不然会校验不过
+  if (nextKind === "long" && DATETIME_RE.test(nextDue)) {
+    nextDue = nextDue.slice(0, 10);
+  }
+
+  const dueProblem = checkDue(nextKind, nextDue);
+  if (dueProblem) return fail(res, 400, 4001, dueProblem);
+
+  patch.kind = nextKind;
+  patch.due = nextDue;
 
   const updated = store.update(req.userId, id, patch);
   ok(res, updated, "修改成功");
