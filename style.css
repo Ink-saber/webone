@@ -3,21 +3,282 @@
    一套浅色、留白多一些的界面，手机优先
    ============================================================ */
 
+/* ============================================================
+   主题令牌
+   四套皮肤共用同一组变量名，只换值。
+   默认（没有 data-theme 时）是「春·柳岸」。
+   ============================================================ */
+
 :root {
-  --bg: #f4f6f8;
-  --surface: #ffffff;
-  --text: #1b1f24;
-  --text-soft: #6b7280;
-  --line: #e5e8ec;
-  --primary: #1f7a4d;
-  --primary-dark: #186340;
-  --primary-soft: #e8f4ee;
-  --danger: #c0392b;
-  --danger-soft: #fdeceb;
-  --warn-soft: #fff6e0;
-  --warn-text: #8a6100;
-  --radius: 12px;
-  --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 24px rgba(16, 24, 40, 0.06);
+  --radius: 6px;
+  --radius-sm: 4px;
+  --shadow: 0 1px 2px rgba(40, 34, 22, 0.06), 0 6px 18px rgba(40, 34, 22, 0.05);
+  --font-title: "Noto Serif SC", "Songti SC", "STSong", "SimSun", Georgia, serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+               "Microsoft YaHei", sans-serif;
+}
+
+/* ---------- 春 · 柳岸 ---------- */
+:root,
+[data-theme="spring"] {
+  --bg: #f2f0e4;
+  --surface: #fbf9f0;
+  --surface-2: #f5f2e7;
+  --hover: #efebdb;
+  --sunken: #ede9d7;
+  --sunken-2: #e6e1cc;
+  --line: #dcd5bf;
+  --line-soft: #e8e2ce;
+  --dashed: #cfc7ac;
+  --text: #2b2a22;
+  --text-soft: #6a6656;
+  --text-muted: #8e8a78;
+  --text-faint: #bdb9a6;
+  --primary: #5f7f4e;
+  --primary-dark: #4b663d;
+  --primary-soft: #e4ebd8;
+  --primary-faint: #a9bf9a;
+  --danger: #a33b2e;
+  --danger-soft: #f6e4df;
+  --danger-line: #e4c3ba;
+  --danger-faint: #c9a096;
+  --warn-soft: #f6ebcf;
+  --warn-text: #7a5b1b;
+  --tag-long-bg: #ece8d8;
+  --tag-short-bg: #e3eaf0;
+  --tag-short-text: #3b5a73;
+  --mark-bg: #f1e3a9;
+  --dot-done: #c2bea9;
+  --glow: #e9efdf;
+  --ink: #2b2a22;
+  --seal: #a6463c;
+}
+
+/* ---------- 夏 · 荷风 ---------- */
+[data-theme="summer"] {
+  --bg: #ebf1f0;
+  --surface: #f8fcfb;
+  --surface-2: #eff5f4;
+  --hover: #e6efee;
+  --sunken: #e4edec;
+  --sunken-2: #dce7e6;
+  --line: #c7d8d6;
+  --line-soft: #dce8e7;
+  --dashed: #b9cdca;
+  --text: #22302f;
+  --text-soft: #5a6e6c;
+  --text-muted: #7e918f;
+  --text-faint: #b2c2c0;
+  --primary: #3f7e7b;
+  --primary-dark: #2f615f;
+  --primary-soft: #ddebe9;
+  --primary-faint: #8fb6b2;
+  --danger: #a63b3b;
+  --danger-soft: #f6e3e3;
+  --danger-line: #e3c0c0;
+  --danger-faint: #cc9c9c;
+  --warn-soft: #f2edd6;
+  --warn-text: #6e5a20;
+  --tag-long-bg: #e7edec;
+  --tag-short-bg: #dfe9f2;
+  --tag-short-text: #35586e;
+  --mark-bg: #efe6b4;
+  --dot-done: #b4c6c4;
+  --glow: #e4f0ee;
+  --ink: #22302f;
+  --seal: #a64a56;
+}
+
+/* ---------- 秋 · 霜叶 ---------- */
+[data-theme="autumn"] {
+  --bg: #f4ecdf;
+  --surface: #fcf7ec;
+  --surface-2: #f6ede0;
+  --hover: #f1e6d5;
+  --sunken: #efe4d2;
+  --sunken-2: #e7d9c3;
+  --line: #dfcbb0;
+  --line-soft: #ede0cb;
+  --dashed: #d2bb9d;
+  --text: #35291b;
+  --text-soft: #6f5c46;
+  --text-muted: #947f65;
+  --text-faint: #c2af95;
+  --primary: #9a5730;
+  --primary-dark: #7c4526;
+  --primary-soft: #f1e3d1;
+  --primary-faint: #c39a78;
+  --danger: #a3392e;
+  --danger-soft: #f5e2dc;
+  --danger-line: #e2c1b6;
+  --danger-faint: #c9a196;
+  --warn-soft: #f3e8ce;
+  --warn-text: #75541a;
+  --tag-long-bg: #eee4d4;
+  --tag-short-bg: #e4e8ef;
+  --tag-short-text: #3e5670;
+  --mark-bg: #f2de9e;
+  --dot-done: #c9b69b;
+  --glow: #f3e8d6;
+  --ink: #35291b;
+  --seal: #b14234;
+}
+
+/* ---------- 冬 · 疏梅 ---------- */
+[data-theme="winter"] {
+  --bg: #eceef3;
+  --surface: #f9fafc;
+  --surface-2: #f0f2f7;
+  --hover: #e8ebf2;
+  --sunken: #e6e9f0;
+  --sunken-2: #dfe3ec;
+  --line: #ccd3df;
+  --line-soft: #e0e5ee;
+  --dashed: #bfc7d5;
+  --text: #222932;
+  --text-soft: #586370;
+  --text-muted: #7b8794;
+  --text-faint: #b3bcc7;
+  --primary: #47607a;
+  --primary-dark: #364b60;
+  --primary-soft: #e2e8f0;
+  --primary-faint: #9baec2;
+  --danger: #a03a45;
+  --danger-soft: #f4e2e5;
+  --danger-line: #e0bfc4;
+  --danger-faint: #c79ba2;
+  --warn-soft: #f1ebd9;
+  --warn-text: #6b5620;
+  --tag-long-bg: #e8ebf1;
+  --tag-short-bg: #e1e7f2;
+  --tag-short-text: #3a5480;
+  --mark-bg: #e9e5c6;
+  --dot-done: #b7c0cd;
+  --glow: #e6ebf3;
+  --ink: #222932;
+  --seal: #a63f4c;
+}
+
+/* ============================================================
+   古风细节：纸纹、衬线标题、朱砂点缀
+   ============================================================ */
+
+body {
+  font-family: var(--font-body);
+  /* 极淡的横纹，模拟宣纸的帘纹，不仔细看看不出来 */
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.012) 0 1px,
+    transparent 1px 3px
+  );
+}
+
+.brand h1,
+h2,
+.cal-title,
+.day-head-title,
+.login-card h1 {
+  font-family: var(--font-title);
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+/* 导航当前项用朱砂色，比绿色更点题 */
+.site-nav a.active {
+  color: var(--seal);
+  border-bottom-color: var(--seal);
+}
+
+/* 主按钮给一条压边，像石刻的阴影 */
+.btn-primary {
+  box-shadow: 0 2px 0 var(--primary-dark);
+}
+.btn-primary:hover:not(:disabled) {
+  box-shadow: 0 1px 0 var(--primary-dark);
+  transform: translateY(1px);
+}
+
+/* 卡片用细线描边，收掉大圆角 */
+.panel {
+  border-radius: var(--radius);
+  box-shadow: var(--shadow), inset 0 0 0 1px var(--line-soft);
+}
+
+/* 日历选中日做成方形，像盖的章 */
+.cal-cell {
+  border-radius: var(--radius-sm);
+}
+
+/* ============================================================
+   主题切换器
+   ============================================================ */
+
+.theme-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--text-soft);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.theme-btn:hover {
+  color: var(--text);
+  border-color: var(--primary-faint);
+}
+
+.theme-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  flex: none;
+}
+
+.theme-wrap {
+  position: relative;
+}
+
+.theme-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 60;
+  width: 168px;
+  padding: 6px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(40, 34, 22, 0.14);
+}
+
+.theme-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 9px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-align: left;
+}
+
+.theme-option:hover { background: var(--hover); }
+
+.theme-option.active {
+  background: var(--primary-soft);
+  color: var(--primary-dark);
+  font-weight: 600;
 }
 
 * { box-sizing: border-box; }
@@ -136,28 +397,28 @@ main {
 .btn-primary {
   padding: 9px 18px;
   background: var(--primary);
-  color: #fff;
+  color: var(--surface);
 }
 .btn-primary:hover:not(:disabled) { background: var(--primary-dark); }
-.btn-primary:disabled { background: #a9cbb9; cursor: default; }
+.btn-primary:disabled { background: var(--primary-faint); cursor: default; }
 
 .btn-ghost {
   padding: 5px 12px;
-  background: #fff;
+  background: var(--surface);
   border-color: var(--line);
   color: var(--text-soft);
 }
-.btn-ghost:hover:not(:disabled) { background: #f6f8fa; color: var(--text); }
-.btn-ghost:disabled { color: #c2c8d0; cursor: default; }
+.btn-ghost:hover:not(:disabled) { background: var(--hover); color: var(--text); }
+.btn-ghost:disabled { color: var(--text-faint); cursor: default; }
 
 .btn-danger {
   padding: 5px 12px;
-  background: #fff;
-  border-color: #f3d6d3;
+  background: var(--surface);
+  border-color: var(--danger-line);
   color: var(--danger);
 }
 .btn-danger:hover:not(:disabled) { background: var(--danger-soft); }
-.btn-danger:disabled { color: #d9b3af; cursor: default; }
+.btn-danger:disabled { color: var(--danger-faint); cursor: default; }
 
 .btn-text {
   padding: 4px 10px;
@@ -166,7 +427,7 @@ main {
   border-color: var(--line);
   font-size: 12px;
 }
-.btn-text:hover { background: #f6f8fa; color: var(--text); }
+.btn-text:hover { background: var(--hover); color: var(--text); }
 
 a.btn-text {
   text-decoration: none;
@@ -192,11 +453,11 @@ a.btn-text {
   border: 1px solid var(--line);
   border-radius: 8px;
   outline: none;
-  background: #fbfcfd;
+  background: var(--surface-2);
 }
 #new-title:focus {
   border-color: var(--primary);
-  background: #fff;
+  background: var(--surface);
   box-shadow: 0 0 0 3px rgba(31, 122, 77, 0.12);
 }
 
@@ -219,11 +480,11 @@ a.btn-text {
   border: 1px solid var(--line);
   border-radius: 8px;
   outline: none;
-  background: #fbfcfd;
+  background: var(--surface-2);
 }
 #search:focus {
   border-color: var(--primary);
-  background: #fff;
+  background: var(--surface);
   box-shadow: 0 0 0 3px rgba(31, 122, 77, 0.12);
 }
 
@@ -258,7 +519,7 @@ a.btn-text {
   padding: 16px;
   color: var(--danger);
   background: var(--danger-soft);
-  border: 1px solid #f6d7d4;
+  border: 1px solid var(--danger-line);
   border-radius: 10px;
 }
 .state.error p { margin: 0 0 10px; word-break: break-word; }
@@ -276,7 +537,7 @@ a.btn-text {
   align-items: center;
   gap: 10px;
   padding: 12px 0;
-  border-bottom: 1px solid #f1f3f6;
+  border-bottom: 1px solid var(--line-soft);
 }
 .list li:last-child { border-bottom: none; }
 
@@ -304,7 +565,7 @@ a.btn-text {
 }
 .item-title:hover { color: var(--primary); }
 .item-title.done-text {
-  color: #9aa1ab;
+  color: var(--text-muted);
   text-decoration: line-through;
 }
 
@@ -376,28 +637,28 @@ h2 {
 .bubble.user {
   align-self: flex-end;
   background: var(--primary);
-  color: #fff;
+  color: var(--surface);
   border-bottom-right-radius: 4px;
 }
 
 .bubble.assistant {
   align-self: flex-start;
-  background: #f4f6f8;
+  background: var(--bg);
   color: var(--text);
   border-bottom-left-radius: 4px;
 }
 
 .bubble.assistant.error {
   background: var(--danger-soft);
-  border: 1px solid #f6d7d4;
+  border: 1px solid var(--danger-line);
   color: var(--danger);
 }
 
 .tool-log {
   margin-bottom: 10px;
   padding: 8px 10px;
-  background: #fff;
-  border: 1px dashed #d5dbe2;
+  background: var(--surface);
+  border: 1px dashed var(--dashed);
   border-radius: 8px;
   font-size: 12px;
 }
@@ -428,11 +689,11 @@ h2 {
   border: 1px solid var(--line);
   border-radius: 10px;
   outline: none;
-  background: #fbfcfd;
+  background: var(--surface-2);
 }
 #chat-input:focus {
   border-color: var(--primary);
-  background: #fff;
+  background: var(--surface);
   box-shadow: 0 0 0 3px rgba(31, 122, 77, 0.12);
 }
 
@@ -454,7 +715,7 @@ h2 {
   min-height: 100vh;
   padding: 20px;
   background:
-    radial-gradient(900px 400px at 50% -10%, #e9f3ee 0%, transparent 70%),
+    radial-gradient(900px 400px at 50% -10%, var(--glow) 0%, transparent 70%),
     var(--bg);
 }
 
@@ -481,7 +742,7 @@ h2 {
   display: flex;
   gap: 6px;
   padding: 4px;
-  background: #f2f4f7;
+  background: var(--sunken);
   border-radius: 10px;
   margin-bottom: 18px;
 }
@@ -499,7 +760,7 @@ h2 {
 }
 
 .login-tab.active {
-  background: #fff;
+  background: var(--surface);
   color: var(--text);
   font-weight: 600;
   box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08);
@@ -527,11 +788,11 @@ h2 {
   border: 1px solid var(--line);
   border-radius: 8px;
   outline: none;
-  background: #fbfcfd;
+  background: var(--surface-2);
 }
 .field input:focus {
   border-color: var(--primary);
-  background: #fff;
+  background: var(--surface);
   box-shadow: 0 0 0 3px rgba(31, 122, 77, 0.12);
 }
 
@@ -563,7 +824,7 @@ h2 {
   margin: 0 auto;
   padding: 20px;
   font-size: 12px;
-  color: #9aa1ab;
+  color: var(--text-muted);
   border-top: 1px solid var(--line);
   text-align: center;
 }
@@ -577,7 +838,7 @@ h2 {
   gap: 10px;
   margin-bottom: 14px;
   padding-bottom: 14px;
-  border-bottom: 1px solid #f1f3f6;
+  border-bottom: 1px solid var(--line-soft);
 }
 
 .panel-hint {
@@ -627,13 +888,13 @@ a.btn-link {
   border: 1px solid var(--line);
   border-radius: 8px;
   outline: none;
-  background: #fbfcfd;
+  background: var(--surface-2);
   resize: vertical;
   min-height: 90px;
 }
 .field textarea:focus {
   border-color: var(--primary);
-  background: #fff;
+  background: var(--surface);
   box-shadow: 0 0 0 3px rgba(31, 122, 77, 0.12);
 }
 
@@ -755,13 +1016,13 @@ body[data-page="chat"] .chat-form {
   padding: 0;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fff;
+  background: var(--surface);
   color: var(--text-soft);
   font-size: 16px;
   line-height: 1;
   cursor: pointer;
 }
-.cal-arrow:hover { background: #f6f8fa; color: var(--text); }
+.cal-arrow:hover { background: var(--hover); color: var(--text); }
 
 .cal-grid {
   display: grid;
@@ -792,9 +1053,9 @@ body[data-page="chat"] .chat-form {
   cursor: pointer;
 }
 .cal-cell.blank { cursor: default; }
-.cal-cell:hover:not(.blank) { background: #f2f5f7; }
+.cal-cell:hover:not(.blank) { background: var(--hover); }
 .cal-cell.today { color: var(--primary); font-weight: 700; }
-.cal-cell.selected { background: var(--primary); color: #fff; font-weight: 600; }
+.cal-cell.selected { background: var(--primary); color: var(--surface); font-weight: 600; }
 .cal-cell.selected:hover { background: var(--primary-dark); }
 
 .cal-dot {
@@ -807,8 +1068,8 @@ body[data-page="chat"] .chat-form {
   border-radius: 50%;
   background: var(--primary);
 }
-.cal-dot.all-done { background: #c6cdd5; }
-.cal-cell.selected .cal-dot { background: #fff; }
+.cal-dot.all-done { background: var(--dot-done); }
+.cal-cell.selected .cal-dot { background: var(--surface); }
 .cal-cell.selected .cal-dot.all-done { background: rgba(255, 255, 255, 0.7); }
 
 .day-panel {
@@ -839,8 +1100,8 @@ body[data-page="chat"] .chat-form {
   color: var(--text);
   font-size: 13px;
 }
-.day-item:hover { background: #f6f8fa; }
-.day-item.is-done { color: #9aa1ab; }
+.day-item:hover { background: var(--hover); }
+.day-item.is-done { color: var(--text-muted); }
 .day-item.is-done .day-title { text-decoration: line-through; }
 
 .day-time {
@@ -874,7 +1135,7 @@ body[data-page="chat"] .chat-form {
   display: flex;
   gap: 4px;
   padding: 4px;
-  background: #f2f4f7;
+  background: var(--sunken);
   border-radius: 10px;
 }
 
@@ -893,7 +1154,7 @@ body[data-page="chat"] .chat-form {
 }
 
 .tabs button.active {
-  background: #fff;
+  background: var(--surface);
   color: var(--text);
   font-weight: 600;
   box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08);
@@ -903,7 +1164,7 @@ body[data-page="chat"] .chat-form {
   font-size: 11px;
   padding: 0 6px;
   border-radius: 999px;
-  background: #e8ecf0;
+  background: var(--sunken-2);
   color: var(--text-soft);
 }
 .tabs button.active .tab-num {
@@ -915,7 +1176,7 @@ body[data-page="chat"] .chat-form {
   display: flex;
   gap: 4px;
   padding: 4px;
-  background: #f2f4f7;
+  background: var(--sunken);
   border-radius: 10px;
 }
 
@@ -932,7 +1193,7 @@ body[data-page="chat"] .chat-form {
 }
 
 .segmented button.active {
-  background: #fff;
+  background: var(--surface);
   color: var(--text);
   font-weight: 600;
   box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08);
@@ -950,8 +1211,8 @@ body[data-page="chat"] .chat-form {
    两类任务的徽标
    ============================================================ */
 
-.badge.long { background: #eef1f5; color: #57606a; }
-.badge.short { background: #e7f0ff; color: #1b4f9c; }
+.badge.long { background: var(--tag-long-bg); color: var(--text-soft); }
+.badge.short { background: var(--tag-short-bg); color: var(--tag-short-text); }
 .badge.done { background: var(--primary-soft); color: var(--primary); }
 
 /* ============================================================
@@ -963,7 +1224,7 @@ body[data-page="chat"] .chat-form {
   align-items: flex-start;
   gap: 10px;
   padding: 12px 0;
-  border-bottom: 1px solid #f1f3f6;
+  border-bottom: 1px solid var(--line-soft);
 }
 
 .item-row:last-child { border-bottom: none; }
@@ -1025,10 +1286,10 @@ body[data-page="chat"] .chat-form {
   color: var(--text-soft);
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fbfcfd;
+  background: var(--surface-2);
   outline: none;
 }
-.quick-due:focus { border-color: var(--primary); background: #fff; }
+.quick-due:focus { border-color: var(--primary); background: var(--surface); }
 .quick-due:not(:placeholder-shown) { color: var(--text); }
 
 .quick-extra {
@@ -1053,11 +1314,11 @@ body[data-page="chat"] .chat-form {
   line-height: 1.6;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fbfcfd;
+  background: var(--surface-2);
   outline: none;
   resize: vertical;
 }
-.quick-note:focus { border-color: var(--primary); background: #fff; }
+.quick-note:focus { border-color: var(--primary); background: var(--surface); }
 
 /* 排序下拉 */
 .sort-select {
@@ -1067,14 +1328,14 @@ body[data-page="chat"] .chat-form {
   color: var(--text-soft);
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fff;
+  background: var(--surface);
   cursor: pointer;
   outline: none;
 }
 
 /* 搜索命中高亮 */
 mark {
-  background: #fff3b0;
+  background: var(--mark-bg);
   color: inherit;
   padding: 0 1px;
   border-radius: 2px;
@@ -1110,8 +1371,8 @@ mark {
   gap: 16px;
   max-width: min(92vw, 480px);
   padding: 12px 16px;
-  background: #1b1f24;
-  color: #fff;
+  background: var(--ink);
+  color: var(--surface);
   font-size: 13px;
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(16, 24, 40, 0.24);
@@ -1131,8 +1392,8 @@ mark {
   padding: 4px 12px;
   font: inherit;
   font-size: 13px;
-  color: #1b1f24;
-  background: #fff;
+  color: var(--ink);
+  background: var(--surface);
   border: none;
   border-radius: 6px;
   cursor: pointer;

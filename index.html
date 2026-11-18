@@ -4,7 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>待办簿</title>
-  <link rel="stylesheet" href="style.css?v=20261118b">
+  <script>try{document.documentElement.setAttribute("data-theme",localStorage.getItem("season")||"spring")}catch(e){document.documentElement.setAttribute("data-theme","spring")}</script>
+
+  <link rel="stylesheet" href="style.css?v=20261119a">
 </head>
 <body data-page="list">
 
@@ -93,6 +95,8 @@
     <span id="toast-text"></span>
     <button id="toast-undo" class="toast-undo" type="button">撤销</button>
   </div>
+
+  <script src="theme.js"></script>
 
   <script src="config.js"></script>
   <script src="branding.js"></script>
