@@ -201,6 +201,11 @@ body > footer {
   z-index: 1;
 }
 
+/* 页头单独抬高：下拉面板挂在页头里，必须压住下面的正文 */
+.site-header {
+  z-index: 10;
+}
+
 .bg-art svg {
   position: absolute;
   left: 0;
@@ -260,38 +265,70 @@ h2,
    主题切换器
    ============================================================ */
 
-/* 切换器：并排四个按钮，直接点，没有弹层 */
-.theme-switch {
-  display: inline-flex;
-  align-items: stretch;
+/* 切换器：圆点按钮 + 下拉面板 */
+.theme-wrap {
+  position: relative;
   flex: none;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  background: var(--surface);
 }
 
-.theme-switch button {
+.theme-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   padding: 3px 9px;
   font: inherit;
   font-size: 12px;
   line-height: 1.7;
   color: var(--text-soft);
-  background: transparent;
-  border: none;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
   cursor: pointer;
 }
 
-.theme-switch button + button {
-  border-left: 1px solid var(--line);
-}
-
-.theme-switch button:hover {
-  background: var(--hover);
+.theme-btn:hover {
   color: var(--text);
+  border-color: var(--primary-faint);
 }
 
-.theme-switch button.active {
+.theme-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: none;
+  opacity: 0.85;
+}
+
+.theme-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 100;
+  width: 156px;
+  padding: 6px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 28px rgba(40, 34, 22, 0.18);
+}
+
+.theme-option {
+  display: block;
+  width: 100%;
+  padding: 7px 9px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-align: left;
+}
+
+.theme-option:hover { background: var(--hover); }
+
+.theme-option.active {
   background: var(--primary-soft);
   color: var(--primary-dark);
   font-weight: 600;
