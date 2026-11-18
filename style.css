@@ -186,10 +186,34 @@ body {
 
 .bg-art {
   position: fixed;
-  inset: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 70vh;
+  min-height: 360px;
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
+  background-repeat: no-repeat;
+  background-position: center bottom;
+  background-size: cover;
+}
+
+/* 四套皮肤各一张图 */
+[data-theme="spring"] .bg-art { background-image: url("assets/spring.webp"); }
+[data-theme="summer"] .bg-art { background-image: url("assets/summer.webp"); }
+[data-theme="autumn"] .bg-art { background-image: url("assets/autumn.webp"); }
+[data-theme="winter"] .bg-art { background-image: url("assets/winter.webp"); }
+
+/* 顶部渐隐，让画面边缘融进页面底色，不出硬线 */
+.bg-art::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 46%;
+  background: linear-gradient(to bottom, var(--bg) 0%, transparent 100%);
 }
 
 /* 正文抬到画面之上（不用负 z-index，避免被根背景吃掉） */
@@ -206,13 +230,14 @@ body > footer {
   z-index: 10;
 }
 
+/* 手绘 SVG 留作备用：图片正常加载时隐藏，加载失败才露出来 */
 .bg-art svg {
+  display: none;
   position: absolute;
   left: 0;
   bottom: 0;
   width: 100%;
   height: auto;
-  display: block;
 }
 
 /* 四季点缀：只显示当前季节那一组 */
