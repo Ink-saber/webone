@@ -1092,6 +1092,13 @@ mark {
   outline: none;
 }
 
+/* hidden 属性必须有最高优先级，
+   否则像 .toast { display: flex } 这样的规则会把 hidden 顶掉，
+   元素就藏不起来了（撤销条一直显示就是这个原因）。 */
+[hidden] {
+  display: none !important;
+}
+
 /* 底部撤销提示条 */
 .toast {
   position: fixed;
