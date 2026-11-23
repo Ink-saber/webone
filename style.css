@@ -1140,35 +1140,36 @@ body[data-page="chat"] .chat-form {
 }
 
 /* ============================================================
-   优先级
+   优先级：高=红，中=紫，低=黄
    ============================================================ */
 
-.list li.item-row.pri-high {
-  box-shadow: inset 2px 0 0 var(--danger);
-  padding-left: 9px;
+:root {
+  --pri-high: var(--danger);
+  --pri-high-soft: var(--danger-soft);
+  --pri-mid: #6b4a9a;
+  --pri-mid-soft: #efe8f7;
+  --pri-low: var(--warn-text);
+  --pri-low-soft: var(--warn-soft);
 }
 
-.list li.item-row.pri-low .item-title {
-  color: var(--text-muted);
-}
+/* 左侧竖线：三档都有 */
+.list li.item-row.pri-high { box-shadow: inset 3px 0 0 var(--pri-high); padding-left: 10px; }
+.list li.item-row.pri-mid  { box-shadow: inset 3px 0 0 var(--pri-mid);  padding-left: 10px; }
+.list li.item-row.pri-low  { box-shadow: inset 3px 0 0 var(--pri-low);  padding-left: 10px; }
 
+/* 档位小标 */
 .pri-chip {
   flex: none;
   font-size: 11px;
   line-height: 1.8;
   padding: 0 6px;
   border-radius: 4px;
+  font-weight: 600;
 }
 
-.pri-chip.high {
-  background: var(--danger-soft);
-  color: var(--danger);
-}
-
-.pri-chip.low {
-  background: var(--surface-2);
-  color: var(--text-muted);
-}
+.pri-chip.high { background: var(--pri-high-soft); color: var(--pri-high); }
+.pri-chip.mid  { background: var(--pri-mid-soft);  color: var(--pri-mid); }
+.pri-chip.low  { background: var(--pri-low-soft);  color: var(--pri-low); }
 
 /* ============================================================
    回收站

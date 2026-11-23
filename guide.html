@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>指南</title>
   <script>try{document.documentElement.setAttribute("data-theme",localStorage.getItem("season")||"spring")}catch(e){document.documentElement.setAttribute("data-theme","spring")}</script>
-  <link rel="stylesheet" href="style.css?v=20261123a">
+  <link rel="stylesheet" href="style.css?v=20261123b">
 </head>
 <body data-page="guide">
 
@@ -80,12 +80,16 @@
         时间过了还没完成的，清单里会标成红色的「已逾期」。
       </p>
 
-      <p><strong>优先级</strong>：每条任务有 高 / 中 / 低 三档，默认「中」。</p>
+      <p><strong>优先级</strong>：每条任务有 高 / 中 / 低 三档，默认「中」，三档都有颜色标注。</p>
       <ul>
-        <li>「高」的左边有红色竖线，标题前有个「高」字小标。</li>
-        <li>排序选「按优先级」时，高 → 中 → 低依次排。</li>
-        <li>新建时能选，详情页编辑时也能改；跟小记说「这事很急」，它会自动标成高。</li>
+        <li><span class="pri-chip high">高</span> 红色：左边红线，最急的事</li>
+        <li><span class="pri-chip mid">中</span> 紫色：日常的事，默认档位</li>
+        <li><span class="pri-chip low">低</span> 黄色：不急，有空再说</li>
       </ul>
+      <p class="guide-note">
+        排序选「按优先级」时，高 → 中 → 低依次排。新建时能选，详情页编辑时也能改；
+        跟小记说「这事很急」，它会自动标成高。
+      </p>
 
       <!-- ③ -->
       <h3 id="add">③ 怎么加</h3>
@@ -194,8 +198,8 @@
     <p><span data-site-name></span></p>
   </footer>
 
-  <script src="theme.js?v=20261123a"></script>
-  <script src="config.js?v=20261123a"></script>
-  <script src="branding.js?v=20261123a"></script>
+  <script src="theme.js?v=20261123b"></script>
+  <script src="config.js?v=20261123b"></script>
+  <script src="branding.js?v=20261123b"></script>
 </body>
 </html>

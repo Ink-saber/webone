@@ -288,8 +288,8 @@ function initListPage() {
   function createRow(it, nowStr, kw) {
     const li = document.createElement("li");
     li.className = "item-row";
-    if (it.priority === "high") li.classList.add("pri-high");
-    if (it.priority === "low") li.classList.add("pri-low");
+    const priState = it.priority === "high" || it.priority === "low" ? it.priority : "mid";
+    li.classList.add("pri-" + priState);
 
     const main = document.createElement("div");
     main.className = "item-main";
@@ -316,12 +316,10 @@ function initListPage() {
 
     top.appendChild(badge);
 
-    if (it.priority === "high" || it.priority === "low") {
-      const pri = document.createElement("span");
-      pri.className = "pri-chip " + it.priority;
-      pri.textContent = it.priority === "high" ? "高" : "低";
-      top.appendChild(pri);
-    }
+    const pri = document.createElement("span");
+    pri.className = "pri-chip " + priState;
+    pri.textContent = priState === "high" ? "高" : (priState === "low" ? "低" : "中");
+    top.appendChild(pri);
 
     top.appendChild(a);
     main.appendChild(top);
