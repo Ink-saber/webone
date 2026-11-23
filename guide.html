@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>指南</title>
+  <script>try{document.documentElement.setAttribute("data-theme",localStorage.getItem("season")||"spring")}catch(e){document.documentElement.setAttribute("data-theme","spring")}</script>
+  <link rel="stylesheet" href="style.css?v=20261120b">
+</head>
+<body data-page="guide">
+
+  <header class="site-header">
+    <div class="brand">
+      <h1 data-site-name>待办簿</h1>
+      <p class="subtitle" data-tagline></p>
+    </div>
+    <div class="user-bar">
+      <span id="user-name" class="user-name"></span>
+      <button id="logout-btn" class="btn-text" type="button">退出</button>
+    </div>
+  </header>
+
+  <nav class="site-nav">
+    <a href="index.html">清单</a>
+    <a href="calendar.html">日历</a>
+    <a href="chat.html"><span data-ai-name>小记</span></a>
+    <a href="guide.html" class="active">指南</a>
+  </nav>
+
+  <main>
+    <section class="panel guide">
+
+      <h2 class="guide-title">使用说明</h2>
+      <p class="guide-lead">
+        这个站点用来记「要做的事」。事情分两类：慢慢做的是<strong>长期任务</strong>，
+        有明确时刻要做的是<strong>短期任务</strong>。两者在清单里分开看，在日历里合在一起看。
+      </p>
+
+      <div class="toc">
+        <a href="#nav">① 三个页面</a>
+        <a href="#type">② 两种任务</a>
+        <a href="#add">③ 怎么加</a>
+        <a href="#edit">④ 怎么改</a>
+        <a href="#del">⑤ 怎么删</a>
+        <a href="#find">⑥ 怎么找</a>
+        <a href="#cal">⑦ 日历</a>
+        <a href="#ai">⑧ 和小记说话</a>
+        <a href="#theme">⑨ 换皮肤</a>
+        <a href="#faq">⑩ 常见问题</a>
+      </div>
+
+      <!-- ① -->
+      <h3 id="nav">① 三个页面</h3>
+      <ul>
+        <li><strong>清单</strong>：所有任务，按类型分 tab，能增删改查。</li>
+        <li><strong>日历</strong>：按月看，哪天有安排哪天打点，点某一天看当天的全部安排。</li>
+        <li><strong>小记</strong>：用说话的方式记事情、查事情。</li>
+      </ul>
+
+      <!-- ② -->
+      <h3 id="type">② 两种任务</h3>
+      <table class="guide-table">
+        <thead>
+          <tr><th>类型</th><th>什么时候用</th><th>时间要求</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="badge long">长期</span></td>
+            <td>没有固定时刻，慢慢推进的事</td>
+            <td>截止日期<strong>可选</strong>，不填就是无限期</td>
+          </tr>
+          <tr>
+            <td><span class="badge short">短期</span></td>
+            <td>某个具体时刻要做的事</td>
+            <td>日期 + 时刻<strong>必填</strong>，比如 2026-11-20 14:30</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="guide-note">
+        时间过了还没完成的，清单里会标成红色的「已逾期」。
+      </p>
+
+      <!-- ③ -->
+      <h3 id="add">③ 怎么加</h3>
+      <p><strong>快的：</strong>在清单页顶部输入框写一句，按回车。</p>
+      <ul>
+        <li>不填右侧的时间框 → 建成<strong>长期任务</strong></li>
+        <li>填了时间 → 建成<strong>短期任务</strong></li>
+        <li>想补充说明，点输入框下的「＋ 说明」，写完整再提交</li>
+        <li>加完输入框保持焦点，可以连续敲</li>
+      </ul>
+      <p><strong>全的：</strong>点右上角「＋ 新建待办」。</p>
+      <ul>
+        <li>先选类型，选「短期」时时间会变成必填</li>
+        <li>可以写说明，底下的「保存并再加一条」能连着建好几条</li>
+      </ul>
+
+      <!-- ④ -->
+      <h3 id="edit">④ 怎么改</h3>
+      <ul>
+        <li><strong>改标题</strong>：在清单里<strong>双击</strong>标题，直接改，<code>Enter</code> 保存，<code>Esc</code> 取消。</li>
+        <li><strong>改全部</strong>：点标题进详情页，点「编辑」，能改类型、标题、时间、说明、完成状态。</li>
+        <li><strong>标完成</strong>：清单每条右边的「完成」。完成的会沉到「已完成」里，默认收起。</li>
+      </ul>
+      <p class="guide-note">
+        把短期改成长期时，原来的「日期 时刻」会自动截成日期，不用手动删。
+      </p>
+
+      <!-- ⑤ -->
+      <h3 id="del">⑤ 怎么删</h3>
+      <ul>
+        <li>点「删除」<strong>不会弹确认框</strong>，直接删掉。</li>
+        <li>底部会出现一条提示，<strong>8 秒内点「撤销」可以恢复</strong>。</li>
+        <li>超过 8 秒提示消失，就只能重新建了（数据还在，但页面没有入口）。</li>
+      </ul>
+
+      <!-- ⑥ -->
+      <h3 id="find">⑥ 怎么找</h3>
+      <ul>
+        <li><strong>搜索框</strong>：标题和说明都搜；<strong>搜索时自动跨类型</strong>，不受当前 tab 限制，命中的字会描黄底。</li>
+        <li><strong>tab</strong>：全部 / 长期 / 短期，数字是各类未完成的数量。</li>
+        <li><strong>排序</strong>：按时间 / 按创建 / 按标题。已完成的永远排在最后。</li>
+        <li><strong>只看未完成</strong>：勾上就隐藏已完成的。</li>
+      </ul>
+
+      <!-- ⑦ -->
+      <h3 id="cal">⑦ 日历</h3>
+      <ul>
+        <li>左右箭头换月份，右上角「今天」一键回到今天。</li>
+        <li>日期下面的<strong>小圆点</strong>表示那天有安排：深色＝还有没做完的，灰色＝全部做完了。</li>
+        <li>点某一天，下方列出那天的全部任务，短期任务显示具体时刻，长期任务显示「全天」。</li>
+        <li>「＋ 当天添加」会跳到新建页，日期已经填好。</li>
+      </ul>
+
+      <!-- ⑧ -->
+      <h3 id="ai">⑧ 和小记说话</h3>
+      <p>它能真的读写你的清单，不只是聊天。</p>
+      <ul>
+        <li>「帮我记一条：明天下午三点交周报」→ 它会建成短期任务，时间是明天 15:00</li>
+        <li>「我还有哪些没做完」→ 它会查出来并列给你</li>
+        <li>「这周有空把资料整理一下」→ 建成长期任务</li>
+      </ul>
+      <p><strong>它做不到的：</strong></p>
+      <ul>
+        <li>不能删除、不能标记完成（没有这两个权限），被问到会直接说做不到</li>
+        <li>看不到别的账号的数据</li>
+        <li>不知道今天是几号以外的事——它每次对话都会被告知当前时间</li>
+      </ul>
+      <p class="guide-note">
+        每次对话最多保留最近 12 条消息，更早的会被丢弃，这样不会越来越贵。
+        想重新开一个话题，点右上角「新对话」。
+      </p>
+
+      <!-- ⑨ -->
+      <h3 id="theme">⑨ 换皮肤</h3>
+      <ul>
+        <li>右上角圆点按钮，点开选<strong>春 · 柳岸 / 夏 · 荷风 / 秋 · 霜叶 / 冬 · 疏梅</strong>。</li>
+        <li>选择记在浏览器里，下次打开还是这套。</li>
+      </ul>
+
+      <!-- ⑩ -->
+      <h3 id="faq">⑩ 常见问题</h3>
+
+      <p><strong>问：为什么刷新后我又要重新登录？</strong></p>
+      <p>登录凭证有效期 7 天，存在浏览器里。清缓存、换浏览器、用无痕窗口都会掉登录。</p>
+
+      <p><strong>问：为什么我改了页面却看不到变化？</strong></p>
+      <p>浏览器缓存。按 <code>Ctrl + F5</code> 强刷一次。</p>
+
+      <p><strong>问：为什么我的数据突然没了？</strong></p>
+      <p>服务器上的数据存在容器本地文件里，服务重启或重新部署会重置成初始状态。这不是你的误操作，是当前部署方式的限制。</p>
+
+      <p><strong>问：别人能看到我的待办吗？</strong></p>
+      <p>看不到。每个账号的数据是隔离的，接口层面按账号过滤，直接改网址里的编号也只会返回「没有这条」。</p>
+
+      <p><strong>问：提醒会响吗？</strong></p>
+      <p>不会。时间只是被记下来、在日历上打点、过期标红，不会推送通知。要真提醒得另做一套定时任务。</p>
+
+      <div class="guide-foot">
+        <a class="btn-ghost" href="index.html">← 回到清单</a>
+      </div>
+
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p><span data-site-name></span></p>
+  </footer>
+
+  <script src="theme.js?v=20261120b"></script>
+  <script src="config.js?v=20261120b"></script>
+  <script src="branding.js?v=20261120b"></script>
+</body>
+</html>
