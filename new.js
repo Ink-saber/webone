@@ -10,6 +10,7 @@
 
 const form = document.getElementById("new-form");
 const kindSeg = document.getElementById("kind-seg");
+const priSeg = document.getElementById("priority-seg");
 const kindHint = document.getElementById("kind-hint");
 const titleEl = document.getElementById("title");
 const dueLabel = document.getElementById("due-label");
@@ -23,6 +24,16 @@ const submitBtn = document.getElementById("submit-btn");
 const saveMoreBtn = document.getElementById("save-more");
 
 let kind = "long";
+let priority = "normal";
+
+priSeg.addEventListener("click", function (e) {
+  const btn = e.target.closest("[data-priority]");
+  if (!btn) return;
+  priority = btn.dataset.priority;
+  Array.prototype.forEach.call(priSeg.children, function (b) {
+    b.classList.toggle("active", b.dataset.priority === priority);
+  });
+});
 
 function paintKind() {
   Array.prototype.forEach.call(kindSeg.children, function (btn) {
@@ -114,7 +125,8 @@ async function create(keepGoing) {
         note: noteEl.value.trim(),
         done: doneEl.checked,
         kind: kind,
-        due: due
+        due: due,
+        priority: priority
       })
     });
 

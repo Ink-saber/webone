@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>指南</title>
   <script>try{document.documentElement.setAttribute("data-theme",localStorage.getItem("season")||"spring")}catch(e){document.documentElement.setAttribute("data-theme","spring")}</script>
-  <link rel="stylesheet" href="style.css?v=20261120b">
+  <link rel="stylesheet" href="style.css?v=20261123a">
 </head>
 <body data-page="guide">
 
@@ -80,6 +80,13 @@
         时间过了还没完成的，清单里会标成红色的「已逾期」。
       </p>
 
+      <p><strong>优先级</strong>：每条任务有 高 / 中 / 低 三档，默认「中」。</p>
+      <ul>
+        <li>「高」的左边有红色竖线，标题前有个「高」字小标。</li>
+        <li>排序选「按优先级」时，高 → 中 → 低依次排。</li>
+        <li>新建时能选，详情页编辑时也能改；跟小记说「这事很急」，它会自动标成高。</li>
+      </ul>
+
       <!-- ③ -->
       <h3 id="add">③ 怎么加</h3>
       <p><strong>快的：</strong>在清单页顶部输入框写一句，按回车。</p>
@@ -111,7 +118,7 @@
       <ul>
         <li>点「删除」<strong>不会弹确认框</strong>，直接删掉。</li>
         <li>底部会出现一条提示，<strong>8 秒内点「撤销」可以恢复</strong>。</li>
-        <li>超过 8 秒提示消失，就只能重新建了（数据还在，但页面没有入口）。</li>
+        <li>提示消失后也不是没了：清单页底部有「<strong>最近删除</strong>」，里面能找回来，<strong>保留 30 天</strong>。</li>
       </ul>
 
       <!-- ⑥ -->
@@ -187,8 +194,8 @@
     <p><span data-site-name></span></p>
   </footer>
 
-  <script src="theme.js?v=20261120b"></script>
-  <script src="config.js?v=20261120b"></script>
-  <script src="branding.js?v=20261120b"></script>
+  <script src="theme.js?v=20261123a"></script>
+  <script src="config.js?v=20261123a"></script>
+  <script src="branding.js?v=20261123a"></script>
 </body>
 </html>

@@ -1139,6 +1139,99 @@ body[data-page="chat"] .chat-form {
   padding: 8px 16px;
 }
 
+/* ============================================================
+   优先级
+   ============================================================ */
+
+.list li.item-row.pri-high {
+  box-shadow: inset 2px 0 0 var(--danger);
+  padding-left: 9px;
+}
+
+.list li.item-row.pri-low .item-title {
+  color: var(--text-muted);
+}
+
+.pri-chip {
+  flex: none;
+  font-size: 11px;
+  line-height: 1.8;
+  padding: 0 6px;
+  border-radius: 4px;
+}
+
+.pri-chip.high {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.pri-chip.low {
+  background: var(--surface-2);
+  color: var(--text-muted);
+}
+
+/* ============================================================
+   回收站
+   ============================================================ */
+
+.trash {
+  margin-top: 18px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.trash-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text-soft);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.trash-toggle:hover { color: var(--text); }
+
+.trash-count {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.trash-list { margin-top: 8px; }
+
+.trash-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+  font-size: 13px;
+  color: var(--text-soft);
+  border-bottom: 1px solid var(--line-soft);
+}
+.trash-item:last-child { border-bottom: none; }
+
+.trash-item .t-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trash-item .t-when {
+  flex: none;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.trash-empty {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
 /* ---------- 手机 ---------- */
 
 @media (max-width: 560px) {

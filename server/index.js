@@ -35,6 +35,13 @@ function checkDue(kind, due) {
   return null;
 }
 
+// 返回 null 表示非法
+function readPriority(value) {
+  if (value === undefined || value === null || value === "") return "normal";
+  if (value === "high" || value === "normal" || value === "low") return value;
+  return null;
+}
+
 /* ---------- 跨域 ---------- */
 app.use(function (req, res, next) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -77,6 +84,7 @@ app.get("/api/items", auth.requireAuth, function (req, res) {
   if (req.query.q) opts.q = req.query.q;
   if (req.query.kind === "long" || req.query.kind === "short") opts.kind = req.query.kind;
   if (req.query.date && DATE_RE.test(req.query.date)) opts.date = req.query.date;
+  if (req.query.deleted === "1") opts.deleted = true;
 
   const rows = store.list(req.userId, opts);
   ok(res, rows, "共 " + rows.length + " 条");
@@ -128,12 +136,18 @@ app.post("/api/items", auth.requireAuth, function (req, res) {
   const dueProblem = checkDue(kind, due);
   if (dueProblem) return fail(res, 400, 4001, dueProblem);
 
+  const priority = readPriority(body.priority);
+  if (priority === null) {
+    return fail(res, 400, 4001, "priority 只能是 high / normal / low");
+  }
+
   const item = store.create(req.userId, {
     title: title,
     note: note,
     done: done,
     kind: kind,
-    due: due
+    due: due,
+    priority: priority
   });
   ok(res, item, "新增成功", 201);
 });
@@ -222,6 +236,14 @@ app.put("/api/items/:id", auth.requireAuth, function (req, res) {
 
   patch.kind = nextKind;
   patch.due = nextDue;
+
+  if (body.priority !== undefined) {
+    const priority = readPriority(body.priority);
+    if (priority === null) {
+      return fail(res, 400, 4001, "priority 只能是 high / normal / low");
+    }
+    patch.priority = priority;
+  }
 
   const updated = store.update(req.userId, id, patch);
   ok(res, updated, "修改成功");

@@ -73,7 +73,7 @@ function init() {
     console.log("[store] 已清理 " + (before - db.items.length) + " 条无归属的旧待办");
   }
 
-  // 老数据补新字段：默认都是长期任务、无截止日期
+  // 老数据补新字段：默认都是长期任务、无截止日期、普通优先级
   let migrated = 0;
   db.items.forEach(function (it) {
     if (it.kind !== "long" && it.kind !== "short") {
@@ -81,6 +81,9 @@ function init() {
       migrated++;
     }
     if (typeof it.due !== "string") it.due = "";
+    if (it.priority !== "high" && it.priority !== "low" && it.priority !== "normal") {
+      it.priority = "normal";
+    }
   });
   if (migrated) {
     console.log("[store] 已为 " + migrated + " 条旧待办补上任务类型（默认长期）");
@@ -184,11 +187,19 @@ function list(userId, opts) {
   const q = opts && opts.q ? String(opts.q).toLowerCase() : "";
   const kind = opts && opts.kind;
   const date = opts && opts.date;
+  const wantDeleted = Boolean(opts && opts.deleted);
 
   return db.items
     .filter(function (it) {
       if (it.userId !== userId) return false;
-      if (it.deletedAt) return false;
+
+      // 正常列表排除已删除的；回收站只取已删除的
+      if (wantDeleted) {
+        if (!it.deletedAt) return false;
+      } else if (it.deletedAt) {
+        return false;
+      }
+
       if (kind && it.kind !== kind) return false;
       // date 形如 2026-11-20，匹配 due 的前 10 位
       if (date && String(it.due || "").slice(0, 10) !== date) return false;
@@ -216,6 +227,9 @@ function create(userId, input) {
     userId: userId,
     kind: input.kind === "short" ? "short" : "long",
     due: typeof input.due === "string" ? input.due : "",
+    priority: input.priority === "high" || input.priority === "low"
+      ? input.priority
+      : "normal",
     title: input.title,
     note: input.note || "",
     done: input.done === true,
@@ -232,6 +246,7 @@ function update(userId, id, patch) {
 
   if (patch.kind !== undefined) item.kind = patch.kind;
   if (patch.due !== undefined) item.due = patch.due;
+  if (patch.priority !== undefined) item.priority = patch.priority;
   if (patch.title !== undefined) item.title = patch.title;
   if (patch.note !== undefined) item.note = patch.note;
   if (patch.done !== undefined) item.done = patch.done;

@@ -105,6 +105,13 @@ const TOOLS = [
             description:
               "时间。short 必填，格式 YYYY-MM-DD HH:mm（例如 2026-11-20 14:30）；" +
               "long 可选，只写日期 YYYY-MM-DD（例如 2026-11-20）；都不填就留空。"
+          },
+          priority: {
+            type: "string",
+            enum: ["high", "normal", "low"],
+            description:
+              "优先级。用户说「急」「重要」「先做这个」「马上」用 high；" +
+              "说「有空再说」「不急」用 low；没说就用 normal。"
           }
         },
         required: ["title"]
@@ -174,7 +181,8 @@ function runTool(name, args, userId) {
       note: typeof args.note === "string" ? args.note : "",
       done: false,
       kind: kind,
-      due: due
+      due: due,
+      priority: args.priority === "high" || args.priority === "low" ? args.priority : "normal"
     });
 
     return {

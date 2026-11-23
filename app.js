@@ -74,7 +74,10 @@ function initListPage() {
     retry: document.getElementById("retry"),
     toast: document.getElementById("toast"),
     toastText: document.getElementById("toast-text"),
-    toastUndo: document.getElementById("toast-undo")
+    toastUndo: document.getElementById("toast-undo"),
+    trashToggle: document.getElementById("trash-toggle"),
+    trashList: document.getElementById("trash-list"),
+    trashCount: document.getElementById("trash-count")
   };
 
   let allItems = [];
@@ -87,6 +90,8 @@ function initListPage() {
   let firstLoad = true;
   let undoItem = null;
   let undoTimer = null;
+  let trashItems = [];
+  let trashOpen = false;
 
   /* ---------- 状态 ---------- */
   function setState(state) {
@@ -142,6 +147,7 @@ function initListPage() {
 
       allItems = json.data || [];
       renderList();
+      loadTrash();
 
       if (firstLoad) {
         firstLoad = false;
@@ -175,6 +181,13 @@ function initListPage() {
   function sortItems(arr) {
     return arr.slice().sort(function (a, b) {
       if (a.done !== b.done) return a.done ? 1 : -1;
+
+      if (sortBy === "priority") {
+        const rank = { high: 0, normal: 1, low: 2 };
+        const ra = rank[a.priority] === undefined ? 1 : rank[a.priority];
+        const rb = rank[b.priority] === undefined ? 1 : rank[b.priority];
+        if (ra !== rb) return ra - rb;
+      }
 
       if (sortBy === "title") {
         return String(a.title).localeCompare(String(b.title), "zh");
@@ -275,6 +288,8 @@ function initListPage() {
   function createRow(it, nowStr, kw) {
     const li = document.createElement("li");
     li.className = "item-row";
+    if (it.priority === "high") li.classList.add("pri-high");
+    if (it.priority === "low") li.classList.add("pri-low");
 
     const main = document.createElement("div");
     main.className = "item-main";
@@ -300,6 +315,14 @@ function initListPage() {
     });
 
     top.appendChild(badge);
+
+    if (it.priority === "high" || it.priority === "low") {
+      const pri = document.createElement("span");
+      pri.className = "pri-chip " + it.priority;
+      pri.textContent = it.priority === "high" ? "高" : "低";
+      top.appendChild(pri);
+    }
+
     top.appendChild(a);
     main.appendChild(top);
 
@@ -437,6 +460,7 @@ function initListPage() {
         throw new Error(json.msg || ("服务器返回 " + res.status));
       }
       showUndo(it);
+      loadTrash();
     } catch (err) {
       allItems.splice(index, 0, it);
       renderList();
@@ -530,6 +554,98 @@ function initListPage() {
   el.retry.addEventListener("click", function () {
     firstLoad = true;
     loadItems();
+  });
+
+  /* ---------- 回收站 ---------- */
+
+  async function loadTrash() {
+    try {
+      const res = await apiFetch("/items?deleted=1");
+      const json = await res.json().catch(function () { return {}; });
+      if (!res.ok || json.code !== 0) throw new Error(json.msg || "加载失败");
+      trashItems = json.data || [];
+    } catch (e) {
+      trashItems = [];
+    }
+    renderTrash();
+  }
+
+  function daysAgo(str) {
+    if (!str) return "";
+    const t = Date.parse(String(str).replace(" ", "T"));
+    if (isNaN(t)) return "";
+    const d = Math.floor((Date.now() - t) / 86400000);
+    if (d <= 0) return "今天删除";
+    return d + " 天前删除";
+  }
+
+  function renderTrash() {
+    el.trashCount.textContent = trashItems.length ? "(" + trashItems.length + ")" : "";
+    const caret = el.trashToggle.querySelector(".trash-caret");
+    if (caret) caret.textContent = trashOpen ? "▾" : "▸";
+    el.trashList.hidden = !trashOpen;
+
+    if (!trashOpen) return;
+
+    el.trashList.innerHTML = "";
+
+    if (trashItems.length === 0) {
+      const p = document.createElement("p");
+      p.className = "trash-empty";
+      p.textContent = "没有删除的记录。删掉的东西会在这里留 30 天。";
+      el.trashList.appendChild(p);
+      return;
+    }
+
+    trashItems
+      .slice()
+      .sort(function (a, b) { return String(b.deletedAt).localeCompare(String(a.deletedAt)); })
+      .forEach(function (it) {
+        const row = document.createElement("div");
+        row.className = "trash-item";
+
+        const title = document.createElement("span");
+        title.className = "t-title";
+        title.textContent = it.title;
+
+        const when = document.createElement("span");
+        when.className = "t-when";
+        when.textContent = daysAgo(it.deletedAt);
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "btn-ghost";
+        btn.textContent = "恢复";
+        btn.addEventListener("click", function () { restoreItem(it, btn); });
+
+        row.appendChild(title);
+        row.appendChild(when);
+        row.appendChild(btn);
+        el.trashList.appendChild(row);
+      });
+  }
+
+  async function restoreItem(it, btn) {
+    btn.disabled = true;
+    btn.textContent = "恢复中";
+
+    try {
+      const res = await apiFetch("/items/" + it.id + "/restore", { method: "POST" });
+      const json = await res.json().catch(function () { return {}; });
+      if (!res.ok || json.code !== 0) {
+        throw new Error(json.msg || ("服务器返回 " + res.status));
+      }
+      await loadItems();
+    } catch (err) {
+      window.alert("恢复失败：" + err.message);
+      btn.disabled = false;
+      btn.textContent = "恢复";
+    }
+  }
+
+  el.trashToggle.addEventListener("click", function () {
+    trashOpen = !trashOpen;
+    renderTrash();
   });
 
   loadItems();
@@ -662,6 +778,36 @@ function initDetailPage() {
     kindField.appendChild(kindWrap);
 
     let curKind = it.kind;
+    let curPriority = it.priority || "normal";
+
+    // 优先级
+    const priField = document.createElement("div");
+    priField.className = "field";
+    const priLabel = document.createElement("span");
+    priLabel.textContent = "优先级";
+    const priWrap = document.createElement("div");
+    priWrap.className = "segmented";
+
+    [["high", "高"], ["normal", "中"], ["low", "低"]].forEach(function (pair) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.dataset.priority = pair[0];
+      b.textContent = pair[1];
+      b.addEventListener("click", function () {
+        curPriority = pair[0];
+        paintPriority();
+      });
+      priWrap.appendChild(b);
+    });
+
+    priField.appendChild(priLabel);
+    priField.appendChild(priWrap);
+
+    function paintPriority() {
+      Array.prototype.forEach.call(priWrap.children, function (b) {
+        b.classList.toggle("active", b.dataset.priority === curPriority);
+      });
+    }
 
     // 标题
     const titleField = document.createElement("label");
@@ -754,6 +900,7 @@ function initDetailPage() {
     actions.appendChild(saveBtn);
 
     form.appendChild(kindField);
+    form.appendChild(priField);
     form.appendChild(titleField);
     form.appendChild(dueField);
     form.appendChild(noteField);
@@ -764,6 +911,7 @@ function initDetailPage() {
     optLong.addEventListener("click", function () { curKind = "long"; paintKind(); });
     optShort.addEventListener("click", function () { curKind = "short"; paintKind(); });
     paintKind();
+    paintPriority();
 
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
@@ -791,7 +939,8 @@ function initDetailPage() {
             note: noteInput.value.trim(),
             done: doneBox.checked,
             kind: curKind,
-            due: dueValue
+            due: dueValue,
+            priority: curPriority
           })
         });
 

@@ -6,7 +6,7 @@
   <title>待办簿</title>
   <script>try{document.documentElement.setAttribute("data-theme",localStorage.getItem("season")||"spring")}catch(e){document.documentElement.setAttribute("data-theme","spring")}</script>
 
-  <link rel="stylesheet" href="style.css?v=20261120b">
+  <link rel="stylesheet" href="style.css?v=20261123a">
 </head>
 <body data-page="list">
 
@@ -69,6 +69,7 @@
         </label>
         <select id="sort-by" class="sort-select" title="排序方式">
           <option value="due">按时间</option>
+          <option value="priority">按优先级</option>
           <option value="created">按创建</option>
           <option value="title">按标题</option>
         </select>
@@ -85,6 +86,14 @@
 
       <ul id="list" class="list" hidden></ul>
 
+      <div class="trash">
+        <button id="trash-toggle" class="trash-toggle" type="button">
+          <span class="trash-caret">▸</span> 最近删除
+          <span id="trash-count" class="trash-count"></span>
+        </button>
+        <div id="trash-list" class="trash-list" hidden></div>
+      </div>
+
     </section>
   </main>
 
@@ -97,10 +106,10 @@
     <button id="toast-undo" class="toast-undo" type="button">撤销</button>
   </div>
 
-  <script src="theme.js?v=20261120b"></script>
+  <script src="theme.js?v=20261123a"></script>
 
-  <script src="config.js?v=20261120b"></script>
-  <script src="branding.js?v=20261120b"></script>
-  <script src="app.js?v=20261120b"></script>
+  <script src="config.js?v=20261123a"></script>
+  <script src="branding.js?v=20261123a"></script>
+  <script src="app.js?v=20261123a"></script>
 </body>
 </html>

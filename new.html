@@ -6,7 +6,7 @@
   <title>新建</title>
   <script>try{document.documentElement.setAttribute("data-theme",localStorage.getItem("season")||"spring")}catch(e){document.documentElement.setAttribute("data-theme","spring")}</script>
 
-  <link rel="stylesheet" href="style.css?v=20261120b">
+  <link rel="stylesheet" href="style.css?v=20261123a">
 </head>
 <body data-page="new">
 
@@ -53,6 +53,16 @@
           <em class="field-hint" id="due-hint"></em>
         </label>
 
+        <div class="field">
+          <span>优先级</span>
+          <div class="segmented" id="priority-seg">
+            <button type="button" data-priority="high">高</button>
+            <button type="button" data-priority="normal" class="active">中</button>
+            <button type="button" data-priority="low">低</button>
+          </div>
+          <em class="field-hint">「高」的排在前面，清单里会有红色标记</em>
+        </div>
+
         <label class="field">
           <span>说明（可选）</span>
           <textarea id="note" rows="4" maxlength="500"
@@ -81,10 +91,10 @@
     <p><span data-site-name></span></p>
   </footer>
 
-  <script src="theme.js?v=20261120b"></script>
+  <script src="theme.js?v=20261123a"></script>
 
-  <script src="config.js?v=20261120b"></script>
-  <script src="branding.js?v=20261120b"></script>
-  <script src="new.js?v=20261120b"></script>
+  <script src="config.js?v=20261123a"></script>
+  <script src="branding.js?v=20261123a"></script>
+  <script src="new.js?v=20261123a"></script>
 </body>
 </html>
